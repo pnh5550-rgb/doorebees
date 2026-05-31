@@ -1261,12 +1261,28 @@ function App() {
         '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">'+
         '<head><meta charset="UTF-8"><style>body{font-family:"맑은 고딕",Arial,sans-serif;margin:16px}h3{color:#1B5E20}table{border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #bbb;padding:4px 8px;white-space:nowrap}</style></head>'+
         '<body>'+s1+s2+s3+s4+s5+s6+'</body></html>';
-      const BOM='\uFEFF';
-      const blob=new Blob([BOM+fullHtml],{type:'application/vnd.ms-excel;charset=utf-8'});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url;a.download=`\ub450\ub808\ube44\uc2a4\ud314_${today_str.replace(/-/g,'')}.xls`;
-      document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+      // SheetJS로 진짜 xlsx 생성
+      let XLSX = window.XLSX;
+      if(!XLSX){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+          s.onload=()=>{XLSX=window.XLSX;res();};
+          s.onerror=()=>rej(new Error('SheetJS CDN \ub85c\ub4dc \uc2e4\ud328'));
+          document.head.appendChild(s);
+        });
+      }
+      if(!XLSX) throw new Error('SheetJS \ub85c\ub4dc \uc2e4\ud328');
+      // HTML 파싱 후 워크북 생성
+      const parser=new DOMParser();
+      const doc2=parser.parseFromString(fullHtml,'text/html');
+      const wb2=XLSX.utils.book_new();
+      const sheetNames=['\u2460\uc0b0\ub780\ud604\ud669','\u2461\uc0ac\uc721\ud604\ud669','\u2462\uc120\ubc4c\uc728','\u2463\ucd9c\ud558\uc728','\u2464\uc0b0\ub780\uc774\ub825','\u2465\uc120\ubc4c\uc774\ub825'];
+      doc2.querySelectorAll('table').forEach((tbl,i)=>{
+        const ws2=XLSX.utils.table_to_sheet(tbl,{raw:false});
+        XLSX.utils.book_append_sheet(wb2,ws2,sheetNames[i]||('Sheet'+(i+1)));
+      });
+      XLSX.writeFile(wb2,`두레비스팜_산란사육현황_${today_str.replace(/-/g,'')}.xlsx`);
       showToast('\u2713 \uc5d1\uc140 \uc800\uc7a5 \uc644\ub8cc (6\uac1c \uc2dc\ud2b8)');
     }catch(e){showToast('\uc624\ub958: '+e.message);console.error(e);}
     setExporting(false);
