@@ -1164,47 +1164,185 @@ function App() {
   async function doExport(){
     setExporting(true);showToast('\u23f3 \uc5d1\uc140 \uc0dd\uc131 \uc911...');
     try{
-      const today_str=today();
-      function addDaysL(d,n){const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt.toISOString().slice(0,10);}
-      function dayDiffL(d1,d2){return Math.abs((new Date(d1)-new Date(d2))/86400000);}
-      const H=(v,bg='#2E7D32')=>`<th style="background:${bg};color:#fff;font-weight:bold;font-size:11pt;border:1px solid #bbb;padding:5px 8px;text-align:center;white-space:nowrap">${v}</th>`;
-      const C=(v,bg='#fff',color='#000',bold=false,align='center')=>`<td style="background:${bg};color:${color};font-weight:${bold?'bold':'normal'};font-size:11pt;border:1px solid #ddd;padding:4px 8px;text-align:${align};white-space:nowrap">${v??''}</td>`;
-      const pct=r=>r!=null?r+'%':'\u2014';
-      function tbl(title,headers,rows){
-        return `<h3 style="color:#1B5E20;margin:18px 0 4px;font-size:13pt">${title}</h3>`+
-          `<table style="border-collapse:collapse;margin-bottom:20px"><thead><tr>${headers.map(([v,bg])=>H(v,bg||'#2E7D32')).join('')}</tr></thead>`+
-          `<tbody>${rows.map(r=>`<tr>${r.join('')}</tr>`).join('')}</tbody></table>`;
+      // SheetJS \ub3d9\uc801 \ub85c\ub529
+      let XL=window.XLSX;
+      if(!XL){
+        await new Promise((res,rej)=>{
+          const s=document.createElement('script');
+          s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+          s.onload=()=>{XL=window.XLSX;res();};
+          s.onerror=()=>rej(new Error('SheetJS \ub85c\ub4dc \uc2e4\ud328'));
+          document.head.appendChild(s);
+        });
       }
+      if(!XL)throw new Error('SheetJS \ub85c\ub4dc \uc2e4\ud328');
 
-      /* \u2460 \uc0b0\ub780\uc138\ud305 \ud604\ud669 */
-      const s1rows=SAN_RO.map(room=>{
-        const st=sanSt[room]||{};const cap=SAN_ROOMS[room]?.cap||0;const occ=st.occ||0;
-        const avail=Math.max(0,cap-occ);const rate=cap>0?Math.round(occ/cap*100):0;
-        const bg=rate<50?'#E8F5E9':rate<70?'#FFFDE7':rate<85?'#FFF3E0':rate<95?'#FBE9E7':'#FFEBEE';
-        return[C(room,'#E8F5E9','#1B5E20',true),C(SAN_ROOMS[room]?.dong||''),C(cap.toLocaleString(),'','',false,'right'),
-          C(occ.toLocaleString(),'#E3F2FD','#0D47A1',occ>0,'right'),C(avail.toLocaleString(),avail>0?'#E8F5E9':'#FFEBEE','',false,'right'),
-          C(rate+'%',bg,'',true),C(rate<50?'\uc5ec\uc720':rate<70?'\uc591\ud638':rate<85?'\uc8fc\uc758':rate<95?'\ube61\ube61':'\uc704\ud5d8',bg)];
+      const today_str=today();
+      function dayDiffL(d1,d2){return Math.abs((new Date(d1)-new Date(d2))/86400000);}
+      function addDaysL(d,n){const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt.toISOString().slice(0,10);}
+
+      // \uc0c9\uc0c1 \ud45c
+      const C={
+        san_hdr:'1B5E20',san_hdr2:'2E7D32',san_bg:'DCF0E4',san_alt:'F0F4F8',
+        sak_hdr:'6A1B9A',sak_hdr2:'7B1FA2',sak_bg:'EDE7F6',sak_alt:'F3E5F5',
+        sel_hdr:'E65100',sel_bg:'FFF3E0',
+        ok_bg:'E8F5E9',ok_tx:'1B5E20',
+        warn_bg:'FFF3E0',warn_tx:'E65100',
+        danger_bg:'FFEBEE',danger_tx:'B71C1C',
+        blue_bg:'E3F2FD',blue_tx:'1565C0',
+        gray:'546E7A',lgray:'EEEEEE',white:'FFFFFF',
+      };
+
+      // \uc2a4\ud0c0\uc77c \ud5ec\ud37c
+      function hs(wb,hex){return {fgColor:{rgb:hex}};}
+      function fw(b,sz,rgb){return {bold:b||false,sz:sz||11,color:{rgb:rgb||'000000'},name:'\ub9d1\uc740 \uace0\ub515'};}
+      function al(h,v){return {horizontal:h||'center',vertical:v||'center',wrapText:true};}
+      function bd(c){const s={style:'thin',color:{rgb:c||'CCCCCC'}};const m={style:'medium',color:{rgb:'1B5E20'}};
+        return {top:s,bottom:s,left:s,right:s};}
+      function bdH(hc){const t={style:'medium',color:{rgb:hc||'1B5E20'}};const s={style:'thin',color:{rgb:'999999'}};
+        return {top:t,bottom:t,left:s,right:s};}
+
+      function hcell(v,bg,sz){
+        return {v:v,t:'s',s:{font:fw(true,sz||11,'FFFFFF'),fill:hs(bg||'2E7D32'),
+          alignment:al('center','center'),border:bdH(bg)}};}
+      function dcell(v,bg,bold,color,align,fmt){
+        const t=typeof v==='number'?'n':(v==null?'z':'s');
+        const c={v:v,t:t,s:{font:fw(bold,11,color||'000000'),fill:hs(bg||'FFFFFF'),
+          alignment:al(align||'center','center'),border:bd()}};
+        if(fmt&&t==='n')c.z=fmt;
+        return c;}
+      function tc(v,bg,sz){
+        return {v:v,t:'s',s:{font:fw(true,sz||14,'FFFFFF'),fill:hs(bg||'1B5E20'),
+          alignment:al('left','center')}};}
+      function ratecell(rate){
+        const bg=rate>=60?C.ok_bg:rate>=40?C.warn_bg:C.danger_bg;
+        const tx=rate>=60?C.ok_tx:rate>=40?C.warn_tx:C.danger_tx;
+        return {v:rate/100,t:'n',z:'0%',s:{font:fw(true,14,tx),fill:hs(bg),
+          alignment:al('center','center'),border:bd()}};}
+
+      function setColW(ws,ws_name,widths){
+        ws['!cols']=widths.map(w=>({wch:w}));}
+      function mergeTitle(ws,c1,c2,row,text,bg,sz){
+        ws['!merges']=ws['!merges']||[];
+        ws['!merges'].push({s:{r:row,c:c1},e:{r:row,c:c2}});
+        ws[XL.utils.encode_cell({r:row,c:c1})]=tc(text,bg,sz||15);}
+      function setRowH(ws,rows){ws['!rows']=ws['!rows']||[];rows.forEach(([r,h])=>{(ws['!rows'][r]=ws['!rows'][r]||{}).hpx=h;});}
+
+      const wb2=XL.utils.book_new();
+
+      /* ============================
+         \u2460 \uc0b0\ub780\uc138\ud305 \ud604\ud669
+         ============================ */
+      const ws1={};
+      const san_cols=[3,17,10,12,13,13,13,12,11,13,14];
+      setColW(ws1,'ws1',san_cols);
+
+      // \ud0c0\uc774\ud2c0
+      mergeTitle(ws1,0,10,0,`  \ud83c\udf31 \ub450\ub808\ube44\uc2a4\ud31c  \uc0b0\ub780\uc138\ud305 \ud604\ud669      \ucd9c\ub825\uc77c: ${today_str}`,C.san_hdr,16);
+      // \ud5e4\ub354
+      const s1hdrs=['\ub8f8','\ub3d9\uad6c\ubd84','\ucd1d\uc6a9\ub7c9','\uc0b0\ub780\ud569\uacc4','\uc120\ubc4c\ud569\uacc4','\ud3d0\uae30\ud569\uacc4','\ud604\uc7ac\uc138\ud305','\uc5ec\uc720\uc218\ub7c9','\uc138\ud305\uc728','\uc0c1\ud0dc','\ube44\uace0'];
+      s1hdrs.forEach((h,i)=>{ws1[XL.utils.encode_cell({r:1,c:i})]=hcell(h,C.san_hdr2,11);});
+
+      // \ub370\uc774\ud130: calcSanSt \ub3d9\uc77c \ub85c\uc9c1
+      let s1_tot_cap=0,s1_tot_san=0,s1_tot_sel=0,s1_tot_peg=0,s1_tot_occ=0,s1_tot_avail=0;
+      SAN_RO.forEach((room,ri)=>{
+        const cap=SAN_ROOMS[room].cap;
+        const re_e=entries.filter(e=>e.room===room);
+        const san=re_e.filter(e=>normType(e.type)==='\uc0b0\ub780').reduce((a,e)=>a+e.amount,0);
+        const sel=re_e.filter(e=>normType(e.type)==='\uc120\ubc4c').reduce((a,e)=>a+e.amount,0);
+        const peg=re_e.filter(e=>normType(e.type)==='\uc0b0\ub780\ud3d0\uae30').reduce((a,e)=>a+e.amount,0);
+        const occ=Math.max(0,san-sel-peg);
+        const avail=Math.max(0,cap-occ);
+        const rate=cap>0?Math.round(occ/cap*100):0;
+        const bg_r=ri%2===0?C.san_alt:C.white;
+        const bg_rt=rate<50?C.ok_bg:rate<70?'FFFDE7':rate<85?C.warn_bg:rate<95?'FBE9E7':C.danger_bg;
+        const tx_rt=rate<60?C.ok_tx:rate<85?C.warn_tx:C.danger_tx;
+        const st=rate<50?'\uc5ec\uc720':rate<70?'\uc591\ud638':rate<85?'\uc8fc\uc758':rate<95?'\ube61\ube61':'\uc704\ud5d8';
+        const row=2+ri;
+        ws1[XL.utils.encode_cell({r:row,c:0})]=dcell(room,C.san_bg,true,C.san_hdr,'center');
+        ws1[XL.utils.encode_cell({r:row,c:1})]=dcell(SAN_ROOMS[room].dong,bg_r,false,C.gray);
+        ws1[XL.utils.encode_cell({r:row,c:2})]=dcell(cap,bg_r,false,'333333','right','#,##0');
+        ws1[XL.utils.encode_cell({r:row,c:3})]=dcell(san,bg_r,false,C.san_hdr,'right','#,##0');
+        ws1[XL.utils.encode_cell({r:row,c:4})]=dcell(sel,bg_r,false,sel>0?C.blue_tx:C.gray,'right','#,##0');
+        ws1[XL.utils.encode_cell({r:row,c:5})]=dcell(peg,bg_r,false,peg>0?C.danger_tx:C.gray,'right','#,##0');
+        ws1[XL.utils.encode_cell({r:row,c:6})]=dcell(occ,occ>0?C.blue_bg:bg_r,true,occ>0?C.blue_tx:C.gray,'right','#,##0');
+        ws1[XL.utils.encode_cell({r:row,c:7})]=dcell(avail,avail>200?C.ok_bg:avail<50?C.danger_bg:bg_r,false,'333333','right','#,##0');
+        ws1[XL.utils.encode_cell({r:row,c:8})]={v:rate/100,t:'n',z:'0%',s:{font:fw(true,14,tx_rt),fill:hs(bg_rt),alignment:al('center','center'),border:bd()}};
+        ws1[XL.utils.encode_cell({r:row,c:9})]=dcell(st,bg_rt,false,tx_rt);
+        ws1[XL.utils.encode_cell({r:row,c:10})]=dcell('',bg_r);
+        s1_tot_cap+=cap;s1_tot_san+=san;s1_tot_sel+=sel;s1_tot_peg+=peg;s1_tot_occ+=occ;s1_tot_avail+=avail;
       });
-      const s1=tbl(`\ub450\ub808\ube44\uc2a4\ud314  \uc0b0\ub780\uc138\ud305 \ud604\ud669  \u2014  ${today_str}`,
-        [['\ub8f8'],['\ub3d9\uad6c\ubd84'],['\ucd1d\uc6a9\ub7c9'],['\uc138\ud305\uc218\ub7c9'],['\uc5ec\uc720\uc218\ub7c9'],['\uc138\ud305\uc728'],['\uc0c1\ud0dc']],s1rows);
-
-      /* \u2461 \uc0ac\uc721\uc138\ud305 \ud604\ud669 */
-      const s2rows=SAK_RO.map(room=>{
-        const st=sakSt[room]||{};const cap=SAK_ROOMS[room]?.cap||0;const occ=st.occ||0;
-        const avail=Math.max(0,cap-occ);const rate=cap>0?Math.round(occ/cap*100):0;
-        const bg=rate<50?'#E8F5E9':rate<70?'#FFFDE7':rate<85?'#FFF3E0':rate<95?'#FBE9E7':'#FFEBEE';
-        return[C(room,'#E8F5E9','#1565C0',true),C(cap.toLocaleString(),'','',false,'right'),
-          C(occ.toLocaleString(),'#E3F2FD','#0D47A1',occ>0,'right'),C(avail.toLocaleString(),avail>0?'#E8F5E9':'#FFEBEE','',false,'right'),
-          C(rate+'%',bg,'',true)];
+      // \ud569\uacc4\ud589
+      const s1tr=s1_tot_cap>0?Math.round(s1_tot_occ/s1_tot_cap*100):0;
+      const s1tr_bg=s1tr<50?C.ok_bg:s1tr<70?'FFFDE7':s1tr<85?C.warn_bg:C.danger_bg;
+      const s1tr_tx=s1tr<60?C.ok_tx:s1tr<85?C.warn_tx:C.danger_tx;
+      const s1tot_row=2+SAN_RO.length;
+      ['\ud569\u00a0\u00a0\uacc4','',s1_tot_cap,s1_tot_san,s1_tot_sel,s1_tot_peg,s1_tot_occ,s1_tot_avail,null,null,''].forEach((v,i)=>{
+        if(i===8){ws1[XL.utils.encode_cell({r:s1tot_row,c:i})]={v:s1tr/100,t:'n',z:'0%',s:{font:fw(true,14,s1tr_tx),fill:hs(C.san_bg),alignment:al('center','center'),border:bd()}};}
+        else if(i===9){ws1[XL.utils.encode_cell({r:s1tot_row,c:i})]=dcell('',C.san_bg);}
+        else{ws1[XL.utils.encode_cell({r:s1tot_row,c:i})]=dcell(v,C.san_bg,true,i<2?C.san_hdr:(i<8?'333333':C.san_hdr),i<2?'center':'right',typeof v==='number'?'#,##0':null);}
       });
-      const s2=tbl(`\ub450\ub808\ube44\uc2a4\ud314  \uc0ac\uc721\uc138\ud305 \ud604\ud669  \u2014  ${today_str}`,
-        [['\ub8f8'],['\ucd1d\uc6a9\ub7c9'],['\uc138\ud305\uc218\ub7c9'],['\uc5ec\uc720\uc218\ub7c9'],['\uc138\ud305\uc728']],s2rows);
+      ws1['!ref']=XL.utils.encode_range({r:0,c:0},{r:s1tot_row,c:10});
+      ws1['!rows']=[{hpx:36},{hpx:38}];
+      for(let i=0;i<SAN_RO.length;i++)ws1['!rows'].push({hpx:28});
+      ws1['!rows'].push({hpx:30});
+      ws1['!freeze']={xSplit:0,ySplit:2};
+      XL.utils.book_append_sheet(wb2,ws1,'\u2460\uc0b0\ub780\uc138\ud305\ud604\ud669');
 
-      /* \u2462 \uc8fc\ubcc4 \uc0b0\ub780\uc120\ubc8c\uc728 */
+      /* ============================
+         \u2461 \uc0ac\uc721\uc138\ud305 \ud604\ud669
+         ============================ */
+      const ws2={};
+      setColW(ws2,'ws2',[3,17,13,13,13,13,12,11,14]);
+      mergeTitle(ws2,0,8,0,`  \ud83d\udc1d \ub450\ub808\ube44\uc2a4\ud31c  \uc0ac\uc721\uc138\ud305 \ud604\ud669      \ucd9c\ub825\uc77c: ${today_str}`,C.sak_hdr,16);
+      ['\ub8f8','\ucd1d\uc6a9\ub7c9','\uc0ac\uc721\ud569\uacc4','\ucd9c\ud558\ud569\uacc4','\ud604\uc7ac\uc0ac\uc721','\uc5ec\uc720\uc218\ub7c9','\uac00\ub3d9\uc728','\uc0c1\ud0dc','\ube44\uace0'].forEach((h,i)=>{
+        ws2[XL.utils.encode_cell({r:1,c:i})]=hcell(h,C.sak_hdr2,11);});
+
+      SAK_RO.forEach((room,ri)=>{
+        const cap=SAK_ROOMS[room].cap;
+        const re_e=rearing.filter(e=>e.room===room);
+        const sak=re_e.filter(e=>e.type==='\uc0ac\uc721').reduce((a,e)=>a+e.amount,0);
+        const out=re_e.filter(e=>e.type==='\ucd9c\ud558').reduce((a,e)=>a+e.amount,0);
+        const peg=re_e.filter(e=>e.type==='\uc0ac\uc721\ud3d0\uae30').reduce((a,e)=>a+e.amount,0);
+        const occ=Math.max(0,sak-out-peg);
+        const avail=Math.max(0,cap-occ);
+        const rate=cap>0?Math.round(occ/cap*100):0;
+        const bg_r=ri%2===0?C.sak_alt:C.white;
+        const bg_rt=rate<50?C.ok_bg:rate<70?C.warn_bg:C.danger_bg;
+        const tx_rt=rate<50?C.ok_tx:rate<70?C.warn_tx:C.danger_tx;
+        const st=rate<50?'\uc5ec\uc720':rate<70?'\uc591\ud638':rate<85?'\uc8fc\uc758':'\uc704\ud5d8';
+        const row=2+ri;
+        ws2[XL.utils.encode_cell({r:row,c:0})]=dcell(room,C.sak_bg,true,'4A148C','center');
+        ws2[XL.utils.encode_cell({r:row,c:1})]=dcell(cap,bg_r,false,'333333','right','#,##0');
+        ws2[XL.utils.encode_cell({r:row,c:2})]=dcell(sak,bg_r,false,sak>0?'6A1B9A':C.gray,'right','#,##0');
+        ws2[XL.utils.encode_cell({r:row,c:3})]=dcell(out,bg_r,false,out>0?C.sel_hdr:C.gray,'right','#,##0');
+        ws2[XL.utils.encode_cell({r:row,c:4})]=dcell(occ,occ>0?C.blue_bg:bg_r,true,occ>0?C.blue_tx:C.gray,'right','#,##0');
+        ws2[XL.utils.encode_cell({r:row,c:5})]=dcell(avail,avail>200?C.ok_bg:bg_r,false,'333333','right','#,##0');
+        ws2[XL.utils.encode_cell({r:row,c:6})]={v:rate/100,t:'n',z:'0%',s:{font:fw(true,14,tx_rt),fill:hs(bg_rt),alignment:al('center','center'),border:bd()}};
+        ws2[XL.utils.encode_cell({r:row,c:7})]=dcell(st,bg_rt,false,tx_rt);
+        ws2[XL.utils.encode_cell({r:row,c:8})]=dcell('',bg_r);
+      });
+      ws2['!ref']=XL.utils.encode_range({r:0,c:0},{r:1+SAK_RO.length,c:8});
+      ws2['!rows']=[{hpx:36},{hpx:38}];
+      SAK_RO.forEach(()=>ws2['!rows'].push({hpx:28}));
+      ws2['!freeze']={xSplit:0,ySplit:2};
+      XL.utils.book_append_sheet(wb2,ws2,'\u2461\uc0ac\uc721\uc138\ud305\ud604\ud669');
+
+      /* ============================
+         \u2462 \uc0b0\ub780\uc120\ubc4c\uc728
+         ============================ */
+      const ws3={};
+      setColW(ws3,'ws3',[3,17,25,14,14,14,14,14,13]);
+      mergeTitle(ws3,0,8,0,`  \ud83d\udcca \ub450\ub808\ube44\uc2a4\ud31c  \ubc30\uce58\ubcc4 \uc0b0\ub780\uc120\ubc4c\uc728      \ucd9c\ub825\uc77c: ${today_str}`,C.san_hdr,16);
+      ['\uc0b0\u00a0\ub780\u00a0\uc77c','\ub8f8\u00a0(\ud1b5\ud569\uadf8\ub8f9)','\uc0b0\ub780\uc218\ub7c9','1\ucc28\uc120\ubc4c','2\ucc28\uc120\ubc4c','\ucd1d\uc120\ubc4c\ub7c9','\uc120\u00a0\ubcc4\u00a0\uc728','\uc0c1\u00a0\ud0dc'].forEach((h,i)=>{
+        ws3[XL.utils.encode_cell({r:1,c:i})]=hcell(h,C.san_hdr2,11);});
+
+      // \ubd84\uc0b0\uc138\ud305 \uadf8\ub8f9
       const dR={};entries.forEach(e=>{if(normType(e.type)!=='\uc0b0\ub780')return;if(!dR[e.date])dR[e.date]=[];if(!dR[e.date].includes(e.room))dR[e.date].push(e.room);});
       const sG={};entries.forEach(e=>{if(normType(e.type)!=='\uc0b0\ub780')return;const rooms=dR[e.date];const mg=rooms.length>1;const k=mg?'M_'+e.date:e.date+'_'+e.room;if(!sG[k])sG[k]={date:e.date,room:mg?rooms.slice().sort().join('+'):e.room,rooms,merged:mg,san:0};sG[k].san+=e.amount;});
-      const s3rows=[];
-      Object.values(sG).sort((a,b)=>b.date.localeCompare(a.date)).forEach((g,i)=>{
+      const selList=Object.values(sG).sort((a,b)=>b.date.localeCompare(a.date));
+      let vr=[],s3row=2;
+      selList.forEach((g,ri)=>{
         const bDs=BATCH_RATES.filter(b=>{if(dayDiffL(b.sanDate,g.date)>1)return false;return g.merged?g.rooms.includes(b.sanRoom):b.sanRoom===g.room;}).sort((a,c)=>(a.selDate||'').localeCompare(c.selDate||''));
         const total=bDs.reduce((s,b)=>s+b.selAmt,0);
         const sanTot=g.merged?g.san:(bDs.reduce((s,b)=>s+b.sanAmt,0)||g.san);
@@ -1213,76 +1351,124 @@ function App() {
         const sel2=fsd?bDs.filter(b=>b.selDate>addDaysL(fsd,1)).reduce((s,b)=>s+b.selAmt,0):0;
         const done=bDs.length>0?!!bDs[0].selDate:(addDaysL(g.date,35)<today_str);
         const sr=done&&sanTot>0&&total>0?Math.min(100,Math.round(total/sanTot*100)):null;
-        const bg=i%2===0?'#FAFAFA':'#FFFFFF';
-        const srBg=sr===null?bg:sr>=60?'#E8F5E9':sr>=40?'#FFF3E0':'#FFEBEE';
-        const srColor=sr===null?'#888':sr>=60?'#1B5E20':sr>=40?'#E65100':'#B71C1C';
-        s3rows.push([
-          C(g.date.slice(5),bg,'#444'),
-          C((g.merged?'\ud1b5\ud569 ':'') + g.room,bg,g.merged?'#6A1B9A':'#1B5E20',g.merged),
-          C(g.san.toLocaleString(),bg,'',false,'right'),
-          C(sel1>0?sel1.toLocaleString():'\ub300\uae30',bg,sel1>0?'#1565C0':'#AAA',sel1>0),
-          C(sel2>0?sel2.toLocaleString():'\u2014',bg,sel2>0?'#1565C0':'#AAA'),
-          C(total>0?total.toLocaleString():'\u2014',bg,total>0?'#1565C0':'#AAA',total>0,'right'),
-          sr!==null?C(sr+'%',srBg,srColor,true):C(!done?'\uc9c4\ud589\uc911':'\u2014',bg,'#888'),
-        ]);
+        const bg=ri%2===0?C.san_alt:C.white;
+        const row=s3row+ri;
+        ws3[XL.utils.encode_cell({r:row,c:0})]=dcell(g.date,bg,false,C.gray);
+        ws3[XL.utils.encode_cell({r:row,c:1})]=dcell((g.merged?'\ud83d\udd17 ':'')+g.room,bg,g.merged,g.merged?'6A1B9A':C.san_hdr);
+        ws3[XL.utils.encode_cell({r:row,c:2})]=dcell(g.san,bg,true,'333333','right','#,##0');
+        ws3[XL.utils.encode_cell({r:row,c:3})]=dcell(sel1>0?sel1:null,sel1>0?C.blue_bg:bg,sel1>0,sel1>0?C.blue_tx:C.gray,'right',sel1>0?'#,##0':null);
+        ws3[XL.utils.encode_cell({r:row,c:4})]=dcell(sel2>0?sel2:null,sel2>0?C.blue_bg:bg,sel2>0,sel2>0?C.blue_tx:C.gray,'right',sel2>0?'#,##0':null);
+        ws3[XL.utils.encode_cell({r:row,c:5})]=dcell(total>0?total:null,bg,total>0,total>0?C.blue_tx:C.gray,'right',total>0?'#,##0':null);
+        if(sr!==null){ws3[XL.utils.encode_cell({r:row,c:6})]=ratecell(sr);vr.push(sr);}
+        else ws3[XL.utils.encode_cell({r:row,c:6})]=dcell(null,bg,false,C.gray);
+        const st=!done?'\uc9c4\ud589\uc911':(sr?'\uc644\ub8cc':'\ubbf8\uae30\ub85d');
+        ws3[XL.utils.encode_cell({r:row,c:7})]=dcell(st,!done?'FFF9C4':sr?C.ok_bg:C.lgray,false,C.gray);
       });
-      const s3=tbl('\ubc30\uce58\ubcc4 \uc0b0\ub780\uc138\ud305 \uc120\ubc8c\uc728',
-        [['\uc0b0\ub780\uc77c'],['\ub8f8'],['\uc138\ud305\ub7c9'],['\uc800 1\uc77c\uc790\uc120\ubc8c'],['\uc800 2\uc77c\uc790\uc120\ubc8c'],['\uc120\ubc8c\ud569\uacc4'],['\uc120\ubc8c\uc728']],s3rows);
+      // \ud3c9\uade0\ud589
+      const avgRow=2+selList.length;
+      ['\ud3c9\u00a0\u00a0\uade0','','','','','',null,''].forEach((v,i)=>{
+        if(i===6){const avg=vr.length>0?Math.round(vr.reduce((s,r)=>s+r,0)/vr.length):0;
+          ws3[XL.utils.encode_cell({r:avgRow,c:i})]=ratecell(avg);}
+        else ws3[XL.utils.encode_cell({r:avgRow,c:i})]=dcell(v,C.san_bg,i===0,C.san_hdr,'center',null);
+      });
+      ws3['!ref']=XL.utils.encode_range({r:0,c:0},{r:avgRow,c:7});
+      ws3['!rows']=[{hpx:36},{hpx:38}];
+      selList.forEach(()=>ws3['!rows'].push({hpx:30}));
+      ws3['!rows'].push({hpx:30});
+      ws3['!freeze']={xSplit:0,ySplit:2};
+      XL.utils.book_append_sheet(wb2,ws3,'\u2462\uc0b0\ub780\uc120\ubc4c\uc728');
 
-      /* \u2463 \uc6d4\ubcc4 \uc0ac\uc721\ucd9c\ud558\uc728 */
-      let s4='';
-      if(typeof outRate==='object'&&outRate){
-        const s4rows=Object.entries(outRate).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,18).map(([mo,d],i)=>{
-          const bg=i%2===0?'#FAFAFA':'#FFFFFF';
-          const rt=d.sak>0?Math.min(100,Math.round(d.out/d.sak*100)):null;
-          const rtBg=rt===null?bg:rt>=60?'#E8F5E9':rt>=40?'#FFF3E0':'#FFEBEE';
-          return[C(mo,bg,'#444'),C((d.sak||0).toLocaleString(),bg,'',false,'right'),C((d.out||0).toLocaleString(),bg,'#1565C0',false,'right'),
-            rt!==null?C(rt+'%',rtBg,rt>=60?'#1B5E20':rt>=40?'#E65100':'#B71C1C',true):C('\u2014',bg,'#888')];
+      /* ============================
+         \u2463 \uc0ac\uc721\ucd9c\ud558\uc728
+         ============================ */
+      const ws4={};
+      setColW(ws4,'ws4',[3,18,16,16,14,14,22]);
+      mergeTitle(ws4,0,6,0,`  \ud83d\ude80 \ub450\ub808\ube44\uc2a4\ud31c  \uc6d4\ubcc4 \uc0ac\uc721\ucd9c\ud558\uc728      \ucd9c\ub825\uc77c: ${today_str}`,'E65100',16);
+      ['\uc6d4','\uc0ac\uc721\uc218\ub7c9','\ucd9c\ud558\uc218\ub7c9','\ucd9c\ud558\uc728','\uc0c1\ud0dc','\ube44\uace0'].forEach((h,i)=>{
+        ws4[XL.utils.encode_cell({r:1,c:i})]=hcell(h,'E65100',11);});
+      const sak_mo={},out_mo={};
+      rearing.forEach(e=>{const mo=e.date.slice(0,7);
+        if(e.type==='\uc0ac\uc721')sak_mo[mo]=(sak_mo[mo]||0)+e.amount;
+        else if(e.type==='\ucd9c\ud558')out_mo[mo]=(out_mo[mo]||0)+e.amount;});
+      const all_mo=[...new Set([...Object.keys(sak_mo),...Object.keys(out_mo)])].sort((a,b)=>b.localeCompare(a));
+      if(all_mo.length){
+        all_mo.slice(0,18).forEach((mo,ri)=>{
+          const sak=sak_mo[mo]||0,out=out_mo[mo]||0;
+          const rate=sak>0&&out>0?Math.min(100,Math.round(out/sak*100)):null;
+          const bg=ri%2===0?'F0F4F8':C.white;
+          const row=2+ri;
+          ws4[XL.utils.encode_cell({r:row,c:0})]=dcell(mo,bg,true,'333333');
+          ws4[XL.utils.encode_cell({r:row,c:1})]=dcell(sak||null,bg,false,sak>0?C.blue_tx:C.gray,'right',sak>0?'#,##0':null);
+          ws4[XL.utils.encode_cell({r:row,c:2})]=dcell(out||null,bg,false,out>0?C.sel_hdr:C.gray,'right',out>0?'#,##0':null);
+          if(rate!==null)ws4[XL.utils.encode_cell({r:row,c:3})]=ratecell(rate);
+          else ws4[XL.utils.encode_cell({r:row,c:3})]=dcell(null,bg,false,C.gray);
+          const st=rate&&rate>=60?'\uc6b0\uc218':rate&&rate>=40?'\ubcf4\ud1b5':rate?'\uc800\uc870':mo>=today_str.slice(0,7)?'\uc9c4\ud589\uc911':'\ubbf8\uae30\ub85d';
+          ws4[XL.utils.encode_cell({r:row,c:4})]=dcell(st,rate?ratecell(rate).s.fill.fgColor.rgb:C.lgray,false,C.gray);
+          ws4[XL.utils.encode_cell({r:row,c:5})]=dcell('',bg);
         });
-        s4=tbl('\uc6d4\ubcc4 \uc0ac\uc721\uc138\ud305 \ucd9c\ud558\uc728',[['\uc6d4'],['\uc0ac\uc721\uc218\ub7c9'],['\ucd9c\ud558\uc218\ub7c9'],['\ucd9c\ud558\uc728']],s4rows);
+        ws4['!ref']=XL.utils.encode_range({r:0,c:0},{r:1+Math.min(all_mo.length,18),c:5});
+      }else{
+        ws4[XL.utils.encode_cell({r:2,c:0})]=dcell('\ucd9c\ud558 \ub370\uc774\ud130 \uc5c6\uc74c',C.sel_bg,false,C.gray,'center');
+        ws4['!ref']=XL.utils.encode_range({r:0,c:0},{r:2,c:5});
       }
+      ws4['!rows']=[{hpx:36},{hpx:38}];
+      ws4['!freeze']={xSplit:0,ySplit:2};
+      XL.utils.book_append_sheet(wb2,ws4,'\u2463\uc0ac\uc721\ucd9c\ud558\uc728');
 
-      /* \u2464 \uc0b0\ub780\uc138\ud305 \uc774\ub825 */
-      const s5rows=[...entries].filter(e=>normType(e.type)==='\uc0b0\ub780').sort((a,b)=>b.date.localeCompare(a.date)).map((e,i)=>{
-        const bg=i%2===0?'#FAFAFA':'#FFFFFF';
-        return[C(e.date,bg,'#444'),C(e.room,bg,'#1B5E20',true),C(e.amount.toLocaleString(),bg,'',false,'right')];
+      /* ============================
+         \u2464 \uc0b0\ub780\uc774\ub825
+         ============================ */
+      const ws5={};
+      setColW(ws5,'ws5',[3,17,21,16,15,15,14]);
+      mergeTitle(ws5,0,6,0,`  \ud83c\udf31 \ub450\ub808\ube44\uc2a4\ud31c  \uc0b0\ub780\uc138\ud305 \uc774\ub825      \ucd9c\ub825\uc77c: ${today_str}`,C.san_hdr,16);
+      ['\ub0a0\u00a0\u00a0\uc9dc','\ub8f8','\uc720\ud615','\uc218\u00a0\u00a0\ub7c9','\ub204\uc801\ud569\uacc4','\ube44\uace0',''].forEach((h,i)=>{
+        ws5[XL.utils.encode_cell({r:1,c:i})]=hcell(h,C.san_hdr2,11);});
+      const san_e=[...entries].filter(e=>normType(e.type)==='\uc0b0\ub780').sort((a,b)=>b.date.localeCompare(a.date));
+      let cumul=0;
+      san_e.forEach((e,ri)=>{
+        cumul+=e.amount;
+        const bg=ri%2===0?C.san_alt:C.white; const row=2+ri;
+        ws5[XL.utils.encode_cell({r:row,c:0})]=dcell(e.date,bg,false,C.gray);
+        ws5[XL.utils.encode_cell({r:row,c:1})]=dcell(e.room,bg,true,C.san_hdr);
+        ws5[XL.utils.encode_cell({r:row,c:2})]=dcell('\uc0b0\ub780\uc138\ud305',C.san_bg,false,C.san_hdr);
+        ws5[XL.utils.encode_cell({r:row,c:3})]=dcell(e.amount,bg,true,'333333','right','#,##0');
+        ws5[XL.utils.encode_cell({r:row,c:4})]=dcell(cumul,bg,false,C.gray,'right','#,##0');
+        ws5[XL.utils.encode_cell({r:row,c:5})]=dcell('',bg);
+        ws5[XL.utils.encode_cell({r:row,c:6})]=dcell('',bg);
       });
-      const s5=tbl('\uc0b0\ub780\uc138\ud305 \uc804\uccb4 \uc774\ub825',[['\ub0a0\uc9dc'],['\ub8f8'],['\uc138\ud305\uc218\ub7c9']],s5rows);
+      ws5['!ref']=XL.utils.encode_range({r:0,c:0},{r:1+san_e.length,c:6});
+      ws5['!rows']=[{hpx:36},{hpx:38}]; san_e.forEach(()=>ws5['!rows'].push({hpx:26}));
+      ws5['!freeze']={xSplit:0,ySplit:2};
+      XL.utils.book_append_sheet(wb2,ws5,'\u2464\uc0b0\ub780\uc774\ub825');
 
-      /* \u2465 \uc0ac\uc721\uc138\ud305 \uc774\ub825 */
-      const s6rows=[...entries].filter(e=>normType(e.type)==='\uc120\ubc44'||normType(e.type)==='\uc0b0\ub780\ud3d0\uae30').sort((a,b)=>b.date.localeCompare(a.date)).map((e,i)=>{
-        const bg=i%2===0?'#FAFAFA':'#FFFFFF';
-        return[C(e.date,bg,'#444'),C(e.room,bg,'#1B5E20',true),C(e.type,bg,normType(e.type)==='\uc0b0\ub780\ud3d0\uae30'?'#B71C1C':'#1565C0',true),C(e.amount.toLocaleString(),bg,'',false,'right')];
+      /* ============================
+         \u2465 \uc0ac\uc721\uc774\ub3d9/\ud3d0\uae30 \uc774\ub825
+         ============================ */
+      const ws6={};
+      setColW(ws6,'ws6',[3,17,21,16,15,15,14]);
+      mergeTitle(ws6,0,6,0,`  \ud83d\udccb \ub450\ub808\ube44\uc2a4\ud31c  \uc0ac\uc721\uc774\ub3d9/\ud3d0\uae30 \uc774\ub825      \ucd9c\ub825\uc77c: ${today_str}`,'E65100',16);
+      ['\ub0a0\u00a0\u00a0\uc9dc','\ub8f8','\uc720\ud615','\uc218\u00a0\u00a0\ub7c9','\ube44\uace0','',''].forEach((h,i)=>{
+        ws6[XL.utils.encode_cell({r:1,c:i})]=hcell(h,'E65100',11);});
+      const sel_e=[...entries].filter(e=>normType(e.type)==='\uc120\ubc4c'||normType(e.type)==='\uc0b0\ub780\ud3d0\uae30').sort((a,b)=>b.date.localeCompare(a.date));
+      sel_e.forEach((e,ri)=>{
+        const is_peg=normType(e.type)==='\uc0b0\ub780\ud3d0\uae30';
+        const bg=(ri%2===0?(is_peg?'FFF8E1':'F0F8F0'):C.white);
+        const tx=is_peg?C.danger_tx:C.blue_tx; const row=2+ri;
+        ws6[XL.utils.encode_cell({r:row,c:0})]=dcell(e.date,bg,false,C.gray);
+        ws6[XL.utils.encode_cell({r:row,c:1})]=dcell(e.room,bg,true,C.san_hdr);
+        ws6[XL.utils.encode_cell({r:row,c:2})]=dcell(is_peg?'\ud3d0\u00a0\u00a0\uae30':'\uc0ac\uc721\uc774\ub3d9',is_peg?C.danger_bg:C.ok_bg,true,tx);
+        ws6[XL.utils.encode_cell({r:row,c:3})]=dcell(e.amount,bg,true,tx,'right','#,##0');
+        ws6[XL.utils.encode_cell({r:row,c:4})]=dcell('',bg);
+        ws6[XL.utils.encode_cell({r:row,c:5})]=dcell('',bg);
+        ws6[XL.utils.encode_cell({r:row,c:6})]=dcell('',bg);
       });
-      const s6=tbl('\uc120\ubc44/\ud3d0\uae30 \uc804\uccb4 \uc774\ub825',[['\ub0a0\uc9dc'],['\ub8f8'],['\uc720\ud615'],['\uc218\ub7c9']],s6rows);
+      ws6['!ref']=XL.utils.encode_range({r:0,c:0},{r:1+sel_e.length,c:6});
+      ws6['!rows']=[{hpx:36},{hpx:38}]; sel_e.forEach(()=>ws6['!rows'].push({hpx:26}));
+      ws6['!freeze']={xSplit:0,ySplit:2};
+      XL.utils.book_append_sheet(wb2,ws6,'\u2465\uc0ac\uc721\uc774\ub3d9\ud3d0\uae30\uc774\ub825');
 
-      /* \ud569\ubcf8 HTML \uc0dd\uc131 \ub0b4\ubcf4\ub0b4\uae30 */
-      const fullHtml='<?xml version="1.0" encoding="UTF-8"?><?mso-application progid="Excel.Sheet"?>'+
-        '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">'+
-        '<head><meta charset="UTF-8"><style>body{font-family:"맑은 고딕",Arial,sans-serif;margin:16px}h3{color:#1B5E20}table{border-collapse:collapse;margin-bottom:20px}th,td{border:1px solid #bbb;padding:4px 8px;white-space:nowrap}</style></head>'+
-        '<body>'+s1+s2+s3+s4+s5+s6+'</body></html>';
-      // SheetJS로 진짜 xlsx 생성
-      let XLSX = window.XLSX;
-      if(!XLSX){
-        await new Promise((res,rej)=>{
-          const s=document.createElement('script');
-          s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
-          s.onload=()=>{XLSX=window.XLSX;res();};
-          s.onerror=()=>rej(new Error('SheetJS CDN \ub85c\ub4dc \uc2e4\ud328'));
-          document.head.appendChild(s);
-        });
-      }
-      if(!XLSX) throw new Error('SheetJS \ub85c\ub4dc \uc2e4\ud328');
-      // HTML 파싱 후 워크북 생성
-      const parser=new DOMParser();
-      const doc2=parser.parseFromString(fullHtml,'text/html');
-      const wb2=XLSX.utils.book_new();
-      const sheetNames=['\u2460\uc0b0\ub780\ud604\ud669','\u2461\uc0ac\uc721\ud604\ud669','\u2462\uc120\ubc4c\uc728','\u2463\ucd9c\ud558\uc728','\u2464\uc0b0\ub780\uc774\ub825','\u2465\uc120\ubc4c\uc774\ub825'];
-      doc2.querySelectorAll('table').forEach((tbl,i)=>{
-        const ws2=XLSX.utils.table_to_sheet(tbl,{raw:false});
-        XLSX.utils.book_append_sheet(wb2,ws2,sheetNames[i]||('Sheet'+(i+1)));
-      });
-      XLSX.writeFile(wb2,`두레비스팜_산란사육현황_${today_str.replace(/-/g,'')}.xlsx`);
+      // \uc800\uc7a5
+      XL.writeFile(wb2,`\ub450\ub808\ube44\uc2a4\ud31c_\uc0b0\ub780\uc0ac\uc721\ud604\ud669_${today_str.replace(/-/g,'')}.xlsx`);
       showToast('\u2713 \uc5d1\uc140 \uc800\uc7a5 \uc644\ub8cc (6\uac1c \uc2dc\ud2b8)');
     }catch(e){showToast('\uc624\ub958: '+e.message);console.error(e);}
     setExporting(false);
