@@ -137,7 +137,7 @@ textarea{resize:none;height:68px;font-size:14px;}
 .btn-row .btn{flex:1;}
 
 /* ── 배치 선택 모달 ── */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:300;align-items:flex-end;justify-content:center;}
 .modal-bg.open{display:flex;}
 .modal{background:#fff;border-radius:22px 22px 0 0;padding:20px 18px 36px;width:100%;max-width:520px;max-height:86vh;overflow-y:auto;}
 .modal-ttl{font-size:17px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
@@ -1460,25 +1460,37 @@ function renderPlan(){
     if(ym!==lastMonth){ lastMonth=ym; const [y,m]=ym.split('-'); html+=`<div class="sec">${y}년 ${parseInt(m)}월</div>`; }
 
     let badge='', progHtml='';
+    // 어두운 배경 카드 여부 (채집 후 월동 전) — 진행바 글씨 색 결정용
+    const _isPendingDark = colAct>0 && dn(td)>=dn(s.collection_thu) && dn(td)<dn(addDays(s.collection_thu,14));
     if(colAct>0||winAct>0){
       // 채집 달성률
       const cDiff=colAct-s.collect_target, cPct=colAct>0?Math.round(colAct/s.collect_target*100):0, cBar=Math.min(cPct,100);
       // 월동입고 달성률
       const wDiff=winAct-s.wintering_target, wPct=winAct>0?Math.round(winAct/s.wintering_target*100):0, wBar=Math.min(wPct,100);
+      // 어두운 카드면 밝은 글씨, 밝은 카드면 어두운 글씨
+      const cTextC=_isPendingDark?'#ffffff':'#1a4d3a';
+      const wTextC=_isPendingDark?'#ffffff':'#1a3a5d';
+      const barTrackC=_isPendingDark?'rgba(255,255,255,.25)':'#e8ede9';
+      const barTrackC2=_isPendingDark?'rgba(255,255,255,.25)':'#e8eef2';
       if(colAct>0){
         badge=`<span class="badge ${cDiff>=0?'bg-g':'bg-r'}">${cDiff>=0?'✅':'⚠️'} ${comma(colAct)}</span>`;
       }
       // 왼쪽=채집, 오른쪽=월동입고 (2단)
       const cColor=cDiff>=0?'#0a7a5a':'var(--R)';
       const wColor=wDiff>=0?'#0a7a5a':'var(--R)';
+      // 진행바 채움색: 어두운 카드면 밝은 녹색, 아니면 기존 색
+      const cFillC=_isPendingDark?(cDiff>=0?'#7fe3b8':'#ff9b9b'):cColor;
+      const wFillC=_isPendingDark?(wDiff>=0?'#7fe3b8':'#ff9b9b'):wColor;
+      const cPctC=_isPendingDark?(cDiff>=0?'#9ff0c8':'#ffb3b3'):cColor;
+      const wPctC=_isPendingDark?(wDiff>=0?'#9ff0c8':'#ffb3b3'):wColor;
       progHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
         <div>
-          <div style="background:#e8ede9;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${cBar}%;background:${cColor};border-radius:5px;"></div></div>
-          <div style="font-size:13px;font-weight:800;color:#1a4d3a;display:flex;justify-content:space-between;"><span>채집 ${comma(colAct)}/${comma(s.collect_target)}</span><span style="color:${cColor};">${cPct}%</span></div>
+          <div style="background:${barTrackC};border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${cBar}%;background:${cFillC};border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:${cTextC};display:flex;justify-content:space-between;"><span>채집 ${comma(colAct)}/${comma(s.collect_target)}</span><span style="color:${cPctC};">${cPct}%</span></div>
         </div>
         <div>
-          <div style="background:#e8eef2;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${wBar}%;background:${wColor};border-radius:5px;"></div></div>
-          <div style="font-size:13px;font-weight:800;color:#1a3a5d;display:flex;justify-content:space-between;"><span>월동 ${comma(winAct)}/${comma(s.wintering_target)}</span><span style="color:${wColor};">${winAct>0?wPct+'%':'-'}</span></div>
+          <div style="background:${barTrackC2};border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${wBar}%;background:${wFillC};border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:${wTextC};display:flex;justify-content:space-between;"><span>월동 ${comma(winAct)}/${comma(s.wintering_target)}</span><span style="color:${wPctC};">${winAct>0?wPct+'%':'-'}</span></div>
         </div>
       </div>`;
     } else if(isPast){ badge=`<span class="badge bg-r">미기록</span>`;
