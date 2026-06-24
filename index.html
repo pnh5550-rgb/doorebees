@@ -136,7 +136,7 @@ window.generateExcel = function(entries) {
   ws1.mergeCells('A2:H2'); H(ws1.getCell('A2'),'2D6A4F','FFFFFF',10,false,'center');
   ws1.getCell('A2').value='출력일: '+todayDisp; ws1.getRow(2).height=18;
   ws1.getRow(3).height=8;
-  ['룸','총 용량','현재 세팅','여유 공간','세팅율','총 산란','총 선별','총 폐기'].forEach(function(h,j){
+  ['룸','총 용량','현재 세팅','여유 공간','세팅율','총 산란','총 사육','총 폐기'].forEach(function(h,j){
     var c=ws1.getCell(4,j+1); c.value=h; H(c,'374151','FFFFFF',10); B(c);
   });
   ws1.getRow(4).height=22;
@@ -217,7 +217,7 @@ window.generateExcel = function(entries) {
     var c=ws3.getCell(4,j+1); c.value=h; H(c,'374151','FFFFFF',10); B(c);
   });
   ws3.getRow(4).height=22;
-  var TM={'산란':'산란세팅','선별':'선별이동','산란폐기':'산란폐기'};
+  var TM={'산란':'산란세팅','선별':'사육세팅','산란폐기':'산란폐기'};
   var TB={'산란':'D8F3DC','선별':'DBEAFE','산란폐기':'FEE2E2'};
   var sortedHist=entries.slice().sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);});
   sortedHist.forEach(function(e,i){
@@ -239,7 +239,7 @@ window.generateExcel = function(entries) {
   ws4.mergeCells('A1:F1'); H(ws4.getCell('A1'),'1B4332','FFFFFF',15); ws4.getCell('A1').value='두레수정벌 월별 산란 통계'; ws4.getRow(1).height=30;
   ws4.mergeCells('A2:F2'); H(ws4.getCell('A2'),'2D6A4F','FFFFFF',10); ws4.getCell('A2').value='출력일: '+todayDisp+' · 순증감=산란-선별-폐기 / 누적재고=월말 룸 총 재고'; ws4.getRow(2).height=18;
   ws4.getRow(3).height=6;
-  ['연월','산란세팅','선별이동','산란폐기','순증감','월말 누적재고'].forEach(function(h,j){
+  ['연월','산란세팅','사육세팅','산란폐기','순증감','월말 누적재고'].forEach(function(h,j){
     var c=ws4.getCell(4,j+1); c.value=h; H(c,'374151','FFFFFF',10); B(c);
   });
   ws4.getRow(4).height=22;
@@ -690,7 +690,7 @@ function EditModal({entry,onSave,onClose}){
         <label className="lbl">종류</label>
         <div className="tbtns">{[['산란','ti-egg','s-san'],['사육','ti-share','s-sel'],['폐기','ti-trash','s-peg']].map(([t,ic,cls])=>(
           <button key={t} className={`tbtn${type===t?' '+cls:''}`} onClick={()=>setType(t)}>
-            <i className={`ti ${ic}`}/>{t==='산란'?'산란세팅':t==='사육'?'선별이동':'산란폐기'}
+            <i className={`ti ${ic}`}/>{t==='산란'?'산란세팅':t==='사육'?'사육세팅':'산란폐기'}
           </button>
         ))}</div>
         <label className="lbl">수량</label>
@@ -725,7 +725,7 @@ function SanBatchView({entries,year}){
             <span style={{fontSize:15,color:'var(--tx2)',marginLeft:10}}>{fmtDate(g.date)}</span>
             {done&&<span style={{marginLeft:8,fontSize:13,background:'var(--sf2)',color:'var(--tx3)',padding:'3px 9px',borderRadius:10}}>완료</span>}
           </div>
-          <div style={{textAlign:'right'}}><b style={{fontSize:22}}>세팅 {fmt(g.san)}</b></div>
+          <div style={{textAlign:'right'}}><b style={{fontSize:22}}>산란세팅 {fmt(g.san)}</b></div>
         </div>
         <div style={{display:'flex',height:10,borderRadius:5,overflow:'hidden',marginBottom:12,background:'var(--sf2)'}}>
           {sel>0&&<div style={{width:Math.min(selR,100)+'%',background:'var(--sel)',transition:'width .5s'}}/>}
@@ -733,7 +733,7 @@ function SanBatchView({entries,year}){
         </div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
           <div style={{background:'var(--sel-bg)',borderRadius:10,padding:'10px 12px',border:'1px solid #93C5FD'}}>
-            <div style={{fontSize:13,color:'var(--sel-t)',fontWeight:700,marginBottom:4}}>✓ 선별이동</div>
+            <div style={{fontSize:13,color:'var(--sel-t)',fontWeight:700,marginBottom:4}}>✓ 사육세팅</div>
             <div style={{fontSize:22,fontWeight:800,color:'var(--sel-t)'}}>{fmt(sel)}</div>
             <div style={{fontSize:13,color:'var(--sel-t)',fontWeight:700,marginTop:3}}>{selR}%</div>
           </div>
@@ -912,7 +912,7 @@ function App(){
     try{
       if(fbConn){await fbPush('entries_v2',ne);}
       else{setEntries(prev=>[...prev,{...ne,id:'loc_'+Date.now()}].sort((a,b)=>a.date.localeCompare(b.date)));}
-      const label=ne.type==='산란'?'산란세팅':ne.type==='사육'?'선별이동':'산란폐기';
+      const label=ne.type==='산란'?'산란세팅':ne.type==='사육'?'사육세팅':'산란폐기';
       showToast(`✓ ${label} ${fmt(ne.amount)} 저장`);
       setForm(f=>({...f,amount:''}));
     }catch(e){showToast('저장 실패: '+e.message);}
@@ -964,7 +964,7 @@ function App(){
     }).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
   },[entries,hf,hr,yr]);
 
-  const typeLabel=t=>t==='산란'?'세팅':t==='사육'?'선별이동':t==='폐기'?'산란폐기':t;
+  const typeLabel=t=>t==='산란'?'산란세팅':t==='사육'?'사육세팅':t==='폐기'?'산란폐기':t;
   const typeBadge=t=>t==='산란'?'b-san':t==='사육'?'b-sel':'b-peg';
   const TABS=[['dash','ti-layout-dashboard','현황'],['input','ti-plus','입력'],['sched','ti-calendar','일정'],['stat','ti-chart-bar','통계'],['hist','ti-history','이력']];
 
@@ -1034,7 +1034,7 @@ function App(){
           </div>
           <label className="lbl">종류</label>
           <div className="tbtns">
-            {[['산란','ti-egg','s-san','산란세팅'],['사육','ti-share','s-sel','선별이동'],['폐기','ti-trash','s-peg','산란폐기']].map(([t,ic,cls,lbl])=>(
+            {[['산란','ti-egg','s-san','산란세팅'],['사육','ti-share','s-sel','사육세팅'],['폐기','ti-trash','s-peg','산란폐기']].map(([t,ic,cls,lbl])=>(
               <button key={t} className={`tbtn${form.type===t?' '+cls:''}`} onClick={()=>setForm(f=>({...f,type:t}))}>
                 <i className={`ti ${ic}`}/>{lbl}
               </button>
@@ -1128,8 +1128,8 @@ function App(){
             <div className="card" style={{marginBottom:10}}>
               <div className="card-hdr">월별 산란 현황 ({yr==='전체'?'전체':yr+'년'})</div>
               <div className="leg">
-                <div className="leg-i"><div className="leg-b" style={{background:'var(--san)'}}/>산란</div>
-                <div className="leg-i"><div className="leg-b" style={{background:'var(--sel)'}}/>선별</div>
+                <div className="leg-i"><div className="leg-b" style={{background:'var(--san)'}}/>산란세팅</div>
+                <div className="leg-i"><div className="leg-b" style={{background:'var(--sel)'}}/>사육세팅</div>
                 <div className="leg-i" style={{color:'var(--tx2)'}}>누적=월말 재고</div>
               </div>
               <div className="chart-wrap"><div className="chart-area">
@@ -1167,7 +1167,7 @@ function App(){
           {histView==='batch'&&<SanBatchView entries={entries} year={yr}/>}
           {histView==='all'&&(<>
             <div className="fbar">
-              {['전체','산란','선별','폐기'].map(t=><button key={t} className={`fbtn${hf===t?' on':''}`} onClick={()=>setHf(t)}>{t}</button>)}
+              {[['전체','전체'],['산란','산란세팅'],['선별','사육세팅'],['폐기','산란폐기']].map(([v,lbl])=><button key={v} className={`fbtn${hf===v?' on':''}`} onClick={()=>setHf(v)}>{lbl}</button>)}
               <span style={{padding:'0 4px',color:'var(--tx3)'}}>|</span>
               {['전체',...SAN_RO].map(r=><button key={r} className={`fbtn${hr===(r==='전체'?'':r)?' on':''}`} onClick={()=>setHr(r==='전체'?'':r)}>{r}</button>)}
             </div>
