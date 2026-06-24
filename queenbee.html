@@ -1195,9 +1195,14 @@ function renderHome(){
     const st=bannerStyles[idx]||bannerStyles[2];
     // 채집 실적: 해당 채집일(±4일) 배치의 collect_qty 합산 (월동입고 배치 제외)
     const colAct=DB.batches.filter(b=>!b.winterIn && Math.abs(dn(b.col_date)-dn(s.collection_thu))<=4*DAY).reduce((a,b)=>a+(b.collect_qty||0),0);
-    const hasDone=colAct>0;
-    const pct=hasDone?Math.round(colAct/s.collect_target*100):0;  // 실제 달성률 (100% 초과 가능)
-    const barPct=Math.min(pct,100);  // 진행바 너비는 100%까지만
+    // 월동입고 실적 = 월동일(채집+14) ±4일 배치의 월동입고(col 이벤트) 합
+    const winDayH=addDays(s.collection_thu,14);
+    const winAct=DB.events.filter(e=>e.type==='col'&&Math.abs(dn(e.date)-dn(winDayH))<=4*DAY).reduce((a,e)=>a+e.qty,0);
+    const hasDone=colAct>0||winAct>0;
+    const pct=colAct>0?Math.round(colAct/s.collect_target*100):0;  // 채집 달성률
+    const barPct=Math.min(pct,100);
+    const wPctH=winAct>0?Math.round(winAct/s.wintering_target*100):0;  // 월동 달성률
+    const wBarH=Math.min(wPctH,100);
     const daysToCollect2=Math.round((dn(s.collection_thu)-dn(td))/DAY);
     const daysFromCollect2=Math.round((dn(td)-dn(s.collection_thu))/DAY);
     const label=idx===0
@@ -1230,7 +1235,16 @@ function renderHome(){
           <div style="font-size:12px;font-weight:600;color:${st.sub};margin-top:2px;">월동 권장수량</div>
         </div>
       </div>
-      ${hasDone?`<div style="background:${st.box};border-radius:4px;height:6px;margin-bottom:4px;overflow:hidden;"><div style="height:100%;width:${barPct}%;background:${st.text};border-radius:4px;opacity:.7;"></div></div><div style="font-size:14px;font-weight:800;color:${st.text};display:flex;justify-content:space-between;margin-bottom:6px;"><span>채집 ${comma(colAct)} / ${comma(s.collect_target)}</span><span>${pct}%</span></div>`:''}
+      ${hasDone?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <div style="background:${st.box};border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${barPct}%;background:${st.text};border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:${st.text};display:flex;justify-content:space-between;"><span>채집 ${comma(colAct)}/${comma(s.collect_target)}</span><span>${colAct>0?pct+'%':'-'}</span></div>
+        </div>
+        <div>
+          <div style="background:${st.box};border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${wBarH}%;background:${st.text};border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:${st.text};display:flex;justify-content:space-between;"><span>월동 ${comma(winAct)}/${comma(s.wintering_target)}</span><span>${winAct>0?wPctH+'%':'-'}</span></div>
+        </div>
+      </div>`:''}
       <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
         ${idx===0
           ? `<div style="background:rgba(255,255,255,.35);border-radius:7px;padding:5px 11px;font-size:14px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,.65);">🐝 채집 ${fmtKo(s.collection_thu)}</div>`
