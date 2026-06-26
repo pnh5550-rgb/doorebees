@@ -562,11 +562,13 @@ function fmtMD(d){return d?d.slice(5).replace('-','/'):'—';}
 function dday(ds){const now=new Date();now.setHours(0,0,0,0);const t=new Date(ds+'T00:00:00');const diff=Math.round((t-now)/86400000);if(diff<0)return{txt:'완료',cls:'dd-ft'};if(diff===0)return{txt:'오늘',cls:'dd-td'};if(diff<=3)return{txt:`D-${diff}일`,cls:'dd-nr'};if(diff<=7)return{txt:`D-${diff}일`,cls:'dd-sn'};return{txt:`D-${diff}일`,cls:'dd-ft'};}
 // 세팅일 기준 4주차(+28일)가 속한 주의 화요일·금요일 반환 (세팅 요일 무관)
 function weekTueFri(settingDate){
-  const w4=addDays(settingDate,28);
-  const dt=new Date(w4+'T00:00:00');
-  const day=dt.getDay(); // 0=일,1=월,2=화,...
-  const toMon=day===0?-6:1-day; // 해당 주 월요일까지 오프셋
-  return{s1:addDays(w4,toMon+1),s2:addDays(w4,toMon+4)}; // 화=월+1, 금=월+4
+  // 세팅일이 속한 '그 주의 월요일'을 기준점으로 (세팅 요일 무관)
+  const dt=new Date(settingDate+'T00:00:00');
+  const day=dt.getDay(); // 0=일,1=월,...,6=토
+  const toMon=day===0?-6:1-day; // 그 주 월요일까지 오프셋
+  const mon=addDays(settingDate,toMon);
+  // 4주 뒤(+28일) 월요일 → 화요일(+29), 금요일(+32)
+  return{s1:addDays(mon,29),s2:addDays(mon,32)};
 }
 function normType(t){if(t==='사육')return '선별';if(t==='폐기')return '산란폐기';return t;}
 
