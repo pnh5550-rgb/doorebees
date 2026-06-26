@@ -750,10 +750,10 @@ function SanBatchView({entries,year}){
             <div style={{fontSize:13,color:'var(--san-t)',fontWeight:700,marginTop:3}}>{g.san>0?Math.round(remain/g.san*100)+'%':''}</div>
           </div>
         </div>
-        {!done&&<div style={{marginTop:10,fontSize:14,color:'var(--tx2)',display:'flex',gap:18}}>
-          <span>1차 예정: <b style={{color:'var(--sel)'}}>{fmtDate(addDays(g.date,29))}</b></span>
-          <span>2차 예정: <b style={{color:'var(--sel)'}}>{fmtDate(addDays(g.date,32))}</b></span>
-        </div>}
+        {!done&&(()=>{const {s1,s2}=weekTueFri(g.date);return <div style={{marginTop:10,fontSize:14,color:'var(--tx2)',display:'flex',gap:18}}>
+          <span>1차 예정: <b style={{color:'var(--sel)'}}>{fmtDate(s1)}</b></span>
+          <span>2차 예정: <b style={{color:'var(--sel)'}}>{fmtDate(s2)}</b></span>
+        </div>;})()}
       </div>
     );
   })}</>);
