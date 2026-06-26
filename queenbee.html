@@ -443,7 +443,7 @@ textarea{resize:none;height:68px;font-size:14px;}
       </div>
     </div>
     <div class="ig"><label>비고</label><textarea id="iPlantNote" placeholder="세팅룸 등"></textarea></div>
-    <button class="btn btn-g" style="backgr    <button class="btn" style="background:#5a9e1a;color:#fff;border-radius:11px;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;padding:15px;width:100%;" onclick="savePlant()">🌱 산란 세팅 저장</button>
+    <button class="btn" style="background:#5a9e1a;color:#fff;border-radius:11px;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;padding:15px;width:100%;" onclick="savePlant()">🌱 산란 세팅 저장</button>
   </div>
 
   <!-- 폐사 -->
@@ -561,12 +561,12 @@ textarea{resize:none;height:68px;font-size:14px;}
     <div class="filter-row" id="editYearFilter" style="margin-bottom:8px;"></div>
     <!-- 타입 필터 -->
     <div class="filter-row" style="margin-bottom:12px;">
-      <button class="fbtn on" id="editFbtn-all"   onclick="setEditFilter('all')">📋 전체</button>
-      <button class="fbtn"    id="editFbtn-collect"  onclick="setEditFilter('collect')">🐝 채집</button>
-      <button class="fbtn"    id="editFbtn-col"   onclick="setEditFilter('col')">🌡 월동</button>
-      <button class="fbtn"    id="editFbtn-rel"   onclick="setEditFilter('rel')">🔓 월동해제</button>
-      <button class="fbtn"    id="editFbtn-plant" onclick="setEditFilter('plant')">🌱 산란세팅</button>
-      <button class="fbtn"    id="editFbtn-death" onclick="setEditFilter('death')">💀 폐사</button>
+      <button class="fbtn on" id="editFbtn-all" onclick="setEditFilter('all')">전체</button>
+      <button class="fbtn rc-collect" id="editFbtn-collect" onclick="setEditFilter('collect')">🐝 채집</button>
+      <button class="fbtn rc-col" id="editFbtn-col" onclick="setEditFilter('col')">🌡 월동입고</button>
+      <button class="fbtn rc-rel" id="editFbtn-rel" onclick="setEditFilter('rel')">🔓 월동해제</button>
+      <button class="fbtn rc-plant" id="editFbtn-plant" onclick="setEditFilter('plant')">🌱 산란세팅</button>
+      <button class="fbtn rc-death" id="editFbtn-death" onclick="setEditFilter('death')">💀 폐사</button>
     </div>
     <div id="editList"></div>
   </div>
