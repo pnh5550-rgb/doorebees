@@ -884,26 +884,18 @@ function App(){
   const shownMax=useMemo(()=>Math.max(...shownMonths.map(m=>Math.max(m.산란||0,m.선별||0)),1),[shownMonths]);
 
   const selSchedule=useMemo(()=>{
-    const grp={};
-    entries.forEach(e=>{if(normType(e.type)!=='산란')return;const k=`${e.date}_${e.room}`;if(!grp[k])grp[k]={date:e.date,room:e.room,amount:0};grp[k].amount+=e.amount;});
     const td=today();
-    // 세팅일 기준 최근 60일(42일 선별창+18일 여유) 내 배치만 표시
-    return Object.values(grp)
-      .filter(g=>g.date>=addDays(td,-60))
-      .sort((a,b)=>b.date.localeCompare(a.date))
-      .map(g=>{
-        const {s1,s2}=weekTueFri(g.date);
-        // 4주차 창 안의 선별 기록 (computeBatches 와 동일 윈도우)
-        const sels=entries
-          .filter(e=>normType(e.type)==='선별'&&e.room===g.room&&e.date>=addDays(g.date,25)&&e.date<=addDays(g.date,42))
-          .sort((a,b)=>a.date.localeCompare(b.date));
-        const firstDate=sels.length?sels[0].date:null;
-        const sel1Done=sels.some(e=>e.date===firstDate);       // 1차 기록 있음
-        const sel2Done=sels.some(e=>firstDate&&e.date!==firstDate); // 2차 기록 있음
-        const done1=sel1Done||s1<td;   // 1차: 기록 있거나 날짜 지남
-        const done2=sel2Done||s2<td;   // 2차: 기록 있거나 날짜 지남
-        const done=done1&&done2;       // 둘 다 완료여야 전체 완료
-        return{...g,s1,s2,sel1Done,sel2Done,done1,done2,done};
+    // computeBatches(단일 진실원천)를 그대로 사용 → 일정·이력·엑셀 완전 일치
+    return window.computeBatches(entries)
+      .filter(b=>b.date>=addDays(td,-60))  // 세팅일 기준 최근 60일만 표시
+      .map(b=>{
+        const {s1,s2}=weekTueFri(b.date);
+        const sel1Done=b.s1>0;          // computeBatches가 귀속한 1차 선별량
+        const sel2Done=b.s2>0;          // 2차 선별량
+        const done1=sel1Done||s1<td;    // 1차: 실제 선별 기록 있거나 예정일 지남
+        const done2=sel2Done||s2<td;    // 2차: 실제 선별 기록 있거나 예정일 지남
+        const done=done1&&done2;
+        return{date:b.date,room:b.room,amount:b.san,s1,s2,sel1Done,sel2Done,done1,done2,done};
       });
   },[entries]);
 
