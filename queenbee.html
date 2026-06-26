@@ -233,6 +233,37 @@ textarea{resize:none;height:68px;font-size:14px;}
 .login-err{color:var(--R);font-size:13px;text-align:center;margin-top:8px;min-height:18px;font-weight:600;}
 .lock-badge{display:inline-flex;align-items:center;gap:5px;background:#fdf0ee;color:var(--R);border:1px solid #f5c4be;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;}
 .lock-badge.on{background:var(--GL);color:var(--G);border-color:var(--GB);}
+
+.ic-tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:2px 0 10px;margin-bottom:4px;}
+.ic-tabs::-webkit-scrollbar{display:none;}
+.ic-tab{flex:0 0 auto;padding:9px 14px;border-radius:20px;border:1.5px solid;background:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s;}
+/* 채집=청록 */
+.ic-c-collect{color:#0a5f6e;border-color:#0a5f6e;}
+.ic-c-collect.on{background:#0a5f6e !important;color:#fff !important;box-shadow:0 2px 8px rgba(10,95,110,.3);}
+/* 월동입고=그린 */
+.ic-c-win{color:#1a6e34;border-color:#1a6e34;}
+.ic-c-win.on{background:#1a6e34 !important;color:#fff !important;box-shadow:0 2px 8px rgba(26,110,52,.3);}
+/* 월동해제=파랑 */
+.ic-c-rel{color:#1a5fa0;border-color:#1a5fa0;}
+.ic-c-rel.on{background:#1a5fa0 !important;color:#fff !important;box-shadow:0 2px 8px rgba(26,95,160,.3);}
+/* 산란세팅=녹청 */
+.ic-c-plant{color:#5a9e1a;border-color:#5a9e1a;}
+.ic-c-plant.on{background:#5a9e1a !important;color:#fff !important;box-shadow:0 2px 8px rgba(90,158,26,.3);}
+/* 폐사=빨강 */
+.ic-c-death{color:#c0392b;border-color:#c0392b;}
+.ic-c-death.on{background:#c0392b !important;color:#fff !important;box-shadow:0 2px 8px rgba(192,57,43,.3);}
+
+/* 기록 탭 필터 버튼 색상 (입력 탭과 통일) */
+.rc-collect{color:#0a5f6e;border-color:#0a5f6e;}
+.rc-collect.on{background:#0a5f6e !important;color:#fff !important;border-color:#0a5f6e !important;}
+.rc-col{color:#1a6e34;border-color:#1a6e34;}
+.rc-col.on{background:#1a6e34 !important;color:#fff !important;border-color:#1a6e34 !important;}
+.rc-rel{color:#1a5fa0;border-color:#1a5fa0;}
+.rc-rel.on{background:#1a5fa0 !important;color:#fff !important;border-color:#1a5fa0 !important;}
+.rc-plant{color:#5a9e1a;border-color:#5a9e1a;}
+.rc-plant.on{background:#5a9e1a !important;color:#fff !important;border-color:#5a9e1a !important;}
+.rc-death{color:#c0392b;border-color:#c0392b;}
+.rc-death.on{background:#c0392b !important;color:#fff !important;border-color:#c0392b !important;}
 </style>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -326,8 +357,15 @@ textarea{resize:none;height:68px;font-size:14px;}
 
 <!-- 입력 -->
 <div class="pg" id="pg-input">
-  <!-- 1. 여왕벌 월동 입고 -->
-  <div class="card">
+  <div class="ic-tabs">
+    <button class="ic-tab ic-c-collect on" id="ict-collect" onclick="showInput('collect')">🐝 채집</button>
+    <button class="ic-tab ic-c-win" id="ict-win" onclick="showInput('win')">🌡 월동입고</button>
+    <button class="ic-tab ic-c-rel" id="ict-rel" onclick="showInput('rel')">🔓 월동해제</button>
+    <button class="ic-tab ic-c-plant" id="ict-plant" onclick="showInput('plant')">🌱 산란세팅</button>
+    <button class="ic-tab ic-c-death" id="ict-death" onclick="showInput('death')">💀 폐사기록</button>
+  </div>
+  <!-- 채집 -->
+  <div class="card ic-card" id="ic-collect">
     <div class="card-ttl" style="color:#0a5f6e;font-size:18px;">🐝 여왕벌 채집 기록</div>
     <div class="ig"><label>채집일 (목요일)</label>
       <input type="date" id="iColDate" oninput="colDateChange()">
@@ -346,8 +384,8 @@ textarea{resize:none;height:68px;font-size:14px;}
     <button class="btn" style="background:#0a5f6e;color:#fff;border-radius:11px;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;padding:15px;width:100%;" onclick="saveCol()">🐝 채집 기록 저장</button>
   </div>
 
-  <!-- 1-2. 여왕벌 월동 입고 (채집 2주 후) -->
-  <div class="card">
+  <!-- 월동입고 -->
+  <div class="card ic-card" id="ic-win" style="display:none;">
     <div class="card-ttl" style="color:#1a6e34;font-size:18px;">🌡 여왕벌 월동 입고</div>
     <div style="background:#e8f5e9;border-left:3px solid #1e7e34;border-radius:9px;padding:10px 13px;font-size:14px;color:#1a4a1a;margin-bottom:13px;">
       💡 채집 후 <b>2주 뒤(목요일)</b>에 월동 입고 수량을 기록합니다.
@@ -363,8 +401,8 @@ textarea{resize:none;height:68px;font-size:14px;}
     <button class="btn" style="background:#1a6e34;color:#fff;border-radius:11px;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;padding:15px;width:100%;" onclick="saveWin()">🌡 월동 입고 저장</button>
   </div>
 
-  <!-- 2. 월동 해제 -->
-  <div class="card">
+  <!-- 월동해제 -->
+  <div class="card ic-card" id="ic-rel" style="display:none;">
     <div class="card-ttl" style="color:#1a5fa0;font-size:18px;">🔓 여왕벌 월동 해제</div>
     <div class="ig"><label>해제일</label>
       <input type="date" id="iRelDate" oninput="relDateChange()">
@@ -385,9 +423,9 @@ textarea{resize:none;height:68px;font-size:14px;}
     <button class="btn" style="background:#1a5fa0;color:#fff;border-radius:11px;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;padding:15px;width:100%;" onclick="saveRel()">🔓 월동 해제 저장</button>
   </div>
 
-  <!-- 3. 산란세팅 -->
-  <div class="card">
-    <div class="card-ttl" style="color:#0a7a5a;font-size:18px;">🌱 산란 세팅</div>
+  <!-- 산란세팅 -->
+  <div class="card ic-card" id="ic-plant" style="display:none;">
+    <div class="card-ttl" style="color:#5a9e1a;font-size:18px;">🌱 산란 세팅</div>
 
     <div class="ig"><label>산란세팅일</label>
       <input type="date" id="iPlantDate" oninput="plantDateChange()">
@@ -405,11 +443,11 @@ textarea{resize:none;height:68px;font-size:14px;}
       </div>
     </div>
     <div class="ig"><label>비고</label><textarea id="iPlantNote" placeholder="세팅룸 등"></textarea></div>
-    <button class="btn btn-g" style="backgr    <button class="btn" style="background:#0a7a5a;color:#fff;border-radius:11px;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;padding:15px;width:100%;" onclick="savePlant()">🌱 산란 세팅 저장</button>
+    <button class="btn btn-g" style="backgr    <button class="btn" style="background:#5a9e1a;color:#fff;border-radius:11px;border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:17px;padding:15px;width:100%;" onclick="savePlant()">🌱 산란 세팅 저장</button>
   </div>
 
-  <!-- 4. 폐사 기록 -->
-  <div class="card">
+  <!-- 폐사 -->
+  <div class="card ic-card" id="ic-death" style="display:none;">
     <div class="card-ttl" style="color:#c0392b;font-size:18px;">💀 폐사 기록</div>
     <div class="ig"><label>폐사일</label>
       <input type="date" id="iDeathDate" oninput="deathDateChange()">
@@ -439,12 +477,12 @@ textarea{resize:none;height:68px;font-size:14px;}
   <div class="sec">전체 기록</div>
   <div class="card">
     <div class="filter-row" id="recFilter">
-      <button class="fbtn on" onclick="setRecFilter('all')">전체</button>
-      <button class="fbtn" onclick="setRecFilter('collect')">🐝 채집</button>
-      <button class="fbtn" onclick="setRecFilter('col')">🌡 입고</button>
-      <button class="fbtn" onclick="setRecFilter('rel')">🔓 해제</button>
-      <button class="fbtn" onclick="setRecFilter('plant')">🌱 산란</button>
-      <button class="fbtn" onclick="setRecFilter('death')">💀 폐사</button>
+      <button class="fbtn rc-all on" onclick="setRecFilter('all')">전체</button>
+      <button class="fbtn rc-collect" onclick="setRecFilter('collect')">🐝 채집</button>
+      <button class="fbtn rc-col" onclick="setRecFilter('col')">🌡 월동입고</button>
+      <button class="fbtn rc-rel" onclick="setRecFilter('rel')">🔓 월동해제</button>
+      <button class="fbtn rc-plant" onclick="setRecFilter('plant')">🌱 산란세팅</button>
+      <button class="fbtn rc-death" onclick="setRecFilter('death')">💀 폐사</button>
     </div>
     <div id="recList"></div>
   </div>
@@ -1319,8 +1357,12 @@ function renderHome(){
 
 function setRecFilter(f){
   _recFilter=f;
-  document.querySelectorAll('.fbtn').forEach((b,i)=>{
-    b.classList.toggle('on',['all','col','rel','plant','death'][i]===f);
+  // recFilter 영역의 버튼만 정확히 토글 (색클래스 기준)
+  const map={all:'rc-all',collect:'rc-collect',col:'rc-col',rel:'rc-rel',plant:'rc-plant',death:'rc-death'};
+  document.querySelectorAll('#recFilter .fbtn').forEach(b=>{
+    let on=false;
+    for(const[k,cls]of Object.entries(map)){ if(b.classList.contains(cls)){ on=(k===f); break; } }
+    b.classList.toggle('on',on);
   });
   renderRecList();
 }
@@ -1408,7 +1450,7 @@ function renderRecList(){
   const filtered=_recFilter==='all'?all:all.filter(e=>e.type===_recFilter);
   if(!filtered.length){ document.getElementById('recList').innerHTML='<div class="empty">기록 없음</div>'; return; }
   const typeLabel={collect:'🐝 채집기록',col:'🌡 월동입고',col2:'🌡 월동입고',rel:'🔓 월동해제',plant:'🌱 산란세팅',death:'💀 폐사'};
-  const typeColor={collect:'#0a5f6e',col:'#0a7a5a',rel:'var(--B)',plant:'#0a7a5a',death:'var(--R)'};
+  const typeColor={collect:'#0a5f6e',col:'#1a6e34',rel:'#1a5fa0',plant:'#5a9e1a',death:'#c0392b'};
   const b=DB.batches;
   const html=filtered.map(e=>{
     const batch=b.find(x=>x.id===e.batch_id);
@@ -1745,8 +1787,11 @@ function openEditModal(eid){
   const e=DB.events.find(x=>x.id===eid);
   if(!e) return;
   const batch=DB.batches.find(b=>b.id===e.batch_id);
-  const typeLabel={col:'🐝 월동 입고',rel:'🔓 월동 해제',plant:'🌱 산란세팅',death:'💀 폐사'};
-  document.getElementById('editModalTitle').textContent=typeLabel[e.type]+' 수정';
+  const typeLabel={collect:'🐝 채집 기록',col:'🌡 월동 입고',rel:'🔓 월동 해제',plant:'🌱 산란세팅',death:'💀 폐사'};
+  const typeTitleC={collect:'#0a5f6e',col:'#1a6e34',rel:'#1a5fa0',plant:'#5a9e1a',death:'#c0392b'};
+  const _et=document.getElementById('editModalTitle');
+  _et.textContent=(typeLabel[e.type]||'기록')+' 수정';
+  _et.style.color=typeTitleC[e.type]||'';
   // 월동해제·산란세팅·폐사는 배치 변경 가능
   _editBatch = e.batch_id || null;
   const canPickBatch = (e.type==='rel'||e.type==='plant'||e.type==='death');
@@ -2051,6 +2096,19 @@ function doXLSX(){
   toast('엑셀 보고서 다운로드 ✅');
 }
 
+function showInput(which){
+  const cards={collect:'ic-collect',win:'ic-win',rel:'ic-rel',plant:'ic-plant',death:'ic-death'};
+  Object.values(cards).forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+  const showEl=document.getElementById(cards[which]); if(showEl) showEl.style.display='';
+  // 탭 버튼 활성화
+  ['collect','win','rel','plant','death'].forEach(k=>{
+    const btn=document.getElementById('ict-'+k); if(btn) btn.classList.toggle('on', k===which);
+  });
+  // 화면 상단으로 스크롤
+  const pg=document.getElementById('pg-input'); if(pg) pg.scrollTop=0;
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 function goTab(id){
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
@@ -2072,6 +2130,7 @@ function goTab(id){
     if(typeof relDateChange==='function') relDateChange();
     if(typeof plantDateChange==='function') plantDateChange();
     if(typeof deathDateChange==='function') deathDateChange();
+    showInput('collect');  // 입력 탭 진입 시 항상 채집 화면 먼저
   }
   localStorage.setItem('qbTab28', id);
 }
