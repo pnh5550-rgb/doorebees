@@ -39,8 +39,8 @@ body{padding-bottom:calc(var(--nav-h) + 8px);}
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:620px;height:var(--nav-h);background:#fff;border-top:1px solid var(--border);display:flex;z-index:100;box-shadow:0 -2px 12px rgba(0,0,0,.08);}
 .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--muted);transition:color .15s;padding:6px 0;}
 .nav-btn.on{color:var(--G);}
-.nav-icon{font-size:24px;line-height:1;}
-.nav-lbl{font-size:12px;font-weight:700;}
+.nav-icon{font-size:21px;line-height:1;}
+.nav-lbl{font-size:11px;font-weight:700;white-space:nowrap;}
 
 /* ── 페이지 ── */
 .pg{display:none;padding:14px 14px 100px;}
@@ -450,7 +450,14 @@ textarea{resize:none;height:68px;font-size:14px;}
 </div>
 
 <!-- 계획표 -->
+<div class="pg" id="pg-result">
+  <div style="font-size:13px;color:var(--muted);margin-bottom:10px;padding:0 2px;">📊 지난 채집·월동 실적 (최근순)</div>
+  <div class="filter-row" id="resultFilter"></div>
+  <div id="resultList"></div>
+</div>
+
 <div class="pg" id="pg-plan">
+  <div style="font-size:13px;color:var(--muted);margin-bottom:10px;padding:0 2px;">📋 오늘 이후 예정 계획</div>
   <div class="filter-row" id="planFilter"></div>
   <div id="planList"></div>
 </div>
@@ -623,6 +630,9 @@ textarea{resize:none;height:68px;font-size:14px;}
   </div>
   <div class="nav-btn" id="nb-stock" onclick="goTab('stock')">
     <div class="nav-icon">🗄</div><div class="nav-lbl">재고</div>
+  </div>
+  <div class="nav-btn" id="nb-result" onclick="goTab('result')">
+    <div class="nav-icon">📊</div><div class="nav-lbl">실적</div>
   </div>
   <div class="nav-btn" id="nb-plan" onclick="goTab('plan')">
     <div class="nav-icon">📋</div><div class="nav-lbl">계획표</div>
@@ -1449,22 +1459,35 @@ function exportCSV(){
 /* ═══════════════════════════════════
    계획표 렌더 (최신순)
 ═══════════════════════════════════ */
-let _planFilter='2026';
-function renderPlan(){
+let _planFilter='';
+function renderPlan(mode){
+  mode = mode || 'future';  // 'future'=계획표(미래), 'past'=실적(과거)
+  const isPastMode = (mode==='past');
   const td=today();
-  const ySet2=new Set(SCHED.map(s=>s.collection_thu.slice(0,4)));
+  const filterId = isPastMode?'resultFilter':'planFilter';
+  const listId = isPastMode?'resultList':'planList';
+  let curFilter = isPastMode?_resultFilter:_planFilter;
+  if(!curFilter){ curFilter = defaultYear(mode); if(isPastMode) _resultFilter=curFilter; else _planFilter=curFilter; }
+  const _td2=today();
+  // 이 탭(모드)에 해당하는 SCHED만 추출 (실적=과거, 계획표=미래)
+  const modeData = isPastMode
+    ? SCHED.filter(s=>s.collection_thu<_td2)
+    : SCHED.filter(s=>s.collection_thu>=_td2);
+  // 연도 필터는 이 탭에 실제 데이터가 있는 연도만 표시
+  const ySet2=new Set(modeData.map(s=>s.collection_thu.slice(0,4)));
   const years=[...ySet2].sort();
   const allYears=['all',...years];
   const allLabels=['전체',...years];
-  document.getElementById('planFilter').innerHTML=allYears.map((y,i)=>`
-    <button class="fbtn${_planFilter===y?' on':''}" onclick="setPlanFilter('${y}')">${allLabels[i]}</button>`).join('');
+  const setFn = isPastMode?'setResultFilter':'setPlanFilter';
+  document.getElementById(filterId).innerHTML=allYears.map((y,i)=>`
+    <button class="fbtn${curFilter===y?' on':''}" onclick="${setFn}('${y}')">${allLabels[i]}</button>`).join('');
 
-  let data=_planFilter==='all'?SCHED:SCHED.filter(s=>s.collection_thu.startsWith(_planFilter));
-  // 오늘 기준: 미래(가까운순) 먼저, 그 다음 과거(최신순)
-  const _td2=today();
-  const futurePlan=[...data].filter(s=>s.collection_thu>=_td2).sort((a,b)=>a.collection_thu.localeCompare(b.collection_thu));
-  const pastPlan=[...data].filter(s=>s.collection_thu<_td2).sort((a,b)=>b.collection_thu.localeCompare(a.collection_thu));
-  data=[...futurePlan,...pastPlan];
+  let data=curFilter==='all'?modeData:modeData.filter(s=>s.collection_thu.startsWith(curFilter));
+  if(isPastMode){
+    data=[...data].sort((a,b)=>b.collection_thu.localeCompare(a.collection_thu));  // 실적: 최신순
+  } else {
+    data=[...data].sort((a,b)=>a.collection_thu.localeCompare(b.collection_thu));  // 계획표: 가까운순
+  }
 
   let html='', lastMonth='';
   data.forEach(s=>{
@@ -1600,10 +1623,24 @@ function renderPlan(){
       </div>
     </div>`;
   });
-  document.getElementById('planList').innerHTML=html||'<div class="empty">데이터 없음</div>';
-  // 첫 항목이 오늘 이후이므로 자동 상단 표시
+  document.getElementById(listId).innerHTML=html||`<div class="empty">${isPastMode?'지난 실적이 없습니다':'예정된 계획이 없습니다'}</div>`;
 }
-function setPlanFilter(f){ _planFilter=f; renderPlan(); }
+function setPlanFilter(f){ _planFilter=f; renderPlan('future'); }
+let _resultFilter='';
+function setResultFilter(f){ _resultFilter=f; renderResult(); }
+function renderResult(){ renderPlan('past'); }
+
+// 탭 진입 시 기본 연도: 계획표=가장 가까운 미래 연도, 실적=가장 최근 과거 연도
+function defaultYear(mode){
+  const td=today();
+  const arr = mode==='past'
+    ? SCHED.filter(s=>s.collection_thu<td).map(s=>s.collection_thu.slice(0,4))
+    : SCHED.filter(s=>s.collection_thu>=td).map(s=>s.collection_thu.slice(0,4));
+  if(!arr.length) return 'all';
+  const years=[...new Set(arr)].sort();
+  // 실적: 가장 최근(큰) 연도, 계획표: 가장 가까운(작은) 연도
+  return mode==='past' ? years[years.length-1] : years[0];
+}
 
 /* ═══════════════════════════════════
    설정
@@ -2018,7 +2055,8 @@ function goTab(id){
   window.scrollTo(0,0);
   if(id==='home') renderHome();
   if(id==='stock') renderStock();
-  if(id==='plan') renderPlan();
+  if(id==='plan'){ _planFilter=defaultYear('future'); renderPlan('future'); }
+  if(id==='result'){ _resultFilter=defaultYear('past'); renderResult(); }
   if(id==='cfg'){ applySettings(); renderEditList(); renderUpdYear(); }
   if(id==='input'){
     const td=today();
