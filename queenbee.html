@@ -1708,6 +1708,7 @@ function renderResult(){ renderPlan('past'); }
 
 function setResultView(v){
   _resultView=v;
+  try{ sessionStorage.setItem('qbSessResultView', v); }catch(e){}
   document.getElementById('rv-main').classList.toggle('on', v==='main');
   document.getElementById('rv-plant').classList.toggle('on', v==='plant');
   renderPlan('past');
@@ -1788,6 +1789,7 @@ function renderPlantResult(){
 
 function setPlanView(v){
   _planView=v;
+  try{ sessionStorage.setItem('qbSessPlanView', v); }catch(e){}
   document.getElementById('pv-main').classList.toggle('on', v==='main');
   document.getElementById('pv-plant').classList.toggle('on', v==='plant');
   // 산란세팅 뷰일 때 연도필터/목록 전환
@@ -2328,6 +2330,7 @@ function goTab(id){
     showInput('collect');  // 입력 탭 진입 시 항상 채집 화면 먼저
   }
   localStorage.setItem('qbTab28', id);
+  try{ sessionStorage.setItem('qbSessTab', id); }catch(e){}
 }
 
 function applySettings(){
@@ -2627,10 +2630,24 @@ window.addEventListener('DOMContentLoaded',()=>{
     if(badge){ badge.className='lock-badge on'; badge.textContent='✅ 관리자'; }
   }
 
-  // 새로고침 시 이전 탭 복원
-  const savedTab = localStorage.getItem('qbTab28');
-  if(savedTab && savedTab !== 'home'){
-    goTab(savedTab);
+  // 새로고침 시에만 이전 탭+뷰 복원 (앱 재실행 시엔 홈)
+  // sessionStorage는 새로고침엔 유지, 앱/탭 닫으면 사라짐
+  let sessTab=null;
+  try{ sessTab=sessionStorage.getItem('qbSessTab'); }catch(e){}
+  if(sessTab && sessTab!=='home'){
+    // 월동해제/산란 뷰 상태 먼저 복원
+    try{
+      const pv=sessionStorage.getItem('qbSessPlanView');
+      const rv=sessionStorage.getItem('qbSessResultView');
+      if(pv) _planView=pv;
+      if(rv) _resultView=rv;
+    }catch(e){}
+    goTab(sessTab);
+    // goTab이 main으로 초기화하므로, 저장된 뷰로 다시 전환
+    try{
+      if(sessTab==='plan'){ const pv=sessionStorage.getItem('qbSessPlanView'); if(pv==='plant') setPlanView('plant'); }
+      if(sessTab==='result'){ const rv=sessionStorage.getItem('qbSessResultView'); if(rv==='plant') setResultView('plant'); }
+    }catch(e){}
   }
 });
 </script>
