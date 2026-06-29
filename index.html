@@ -477,7 +477,7 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .rc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .rc-name{font-size:17px;font-weight:900;color:var(--tx)}
 .rc-big .rc-name{font-size:22px}
-.rc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:end;gap:4px;margin-top:9px}
+.rc-stats{display:grid;grid-template-columns:1fr 1fr;align-items:end;gap:4px;margin-top:9px}
 .rc-sl{font-size:12px;color:var(--tx2);font-weight:600;margin-bottom:2px;white-space:nowrap}
 .rc-sv{font-size:19px;font-weight:800;color:var(--tx)}
 .rc-big .rc-sv{font-size:25px}
@@ -629,8 +629,8 @@ function SanCard({room,st,big}){
       <div className="rc-stats">
         <div style={{textAlign:'left'}}><div className="rc-sl">현재세팅</div><b className="rc-sv sv-occ">{fmt(st.occ)}</b></div>
         <div style={{textAlign:'center'}}><div className="rc-sl">여유</div><b className={`rc-sv${st.avail<200?' sv-low':''}`}>{fmt(st.avail)}</b></div>
-        <div style={{textAlign:'right'}}><div className="rc-sl" style={{color:'var(--tx3)'}}>총</div><b className="rc-sv" style={{color:'var(--tx3)',fontWeight:700}}>{fmt(st.cap)}</b></div>
       </div>
+      <div style={{marginTop:6,fontSize:13,color:'var(--tx3)',fontWeight:700,textAlign:'right'}}>총 {fmt(st.cap)}</div>
     </div>
   );
 }
