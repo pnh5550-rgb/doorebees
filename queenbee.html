@@ -1718,7 +1718,7 @@ function renderPlantResult(){
   const td=today();
   let curFilter=_resultFilter || defaultYear('past');
   _resultFilter=curFilter;
-  const modeData=SCHED.filter(s=>s.planting_mon<td);  // 산란일 기준: 오늘 이전만
+  const modeData=SCHED.filter(s=>hasPlantRecord(s));  // 산란 기록 있는 것만 (완료)
   const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
   const years=[...ySet].sort();
   const allYears=['all',...years];
@@ -1795,11 +1795,16 @@ function setPlanView(v){
 }
 
 // 산란세팅 계획만 월별로 표시 (실적 없이, 계획 수량만)
+// 해당 일정에 산란세팅 실제 기록이 있는지
+function hasPlantRecord(s){
+  return DB.events.some(e=>e.type==='plant'&&Math.abs(dn(e.date)-dn(s.planting_mon))<=4*DAY);
+}
+
 function renderPlantPlan(){
   const td=today();
   let curFilter=_planFilter || defaultYear('future');
   _planFilter=curFilter;
-  const modeData=SCHED.filter(s=>s.planting_mon>=td);  // 산란일 기준: 오늘 포함
+  const modeData=SCHED.filter(s=>!hasPlantRecord(s));  // 산란 기록 없는 것만 (예정)
   const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
   const years=[...ySet].sort();
   const allYears=['all',...years];
@@ -1808,7 +1813,11 @@ function renderPlantPlan(){
     <button class="fbtn${curFilter===y?' on':''}" onclick="setPlanFilter('${y}')">${allLabels[i]}</button>`).join('');
 
   let data=curFilter==='all'?modeData:modeData.filter(s=>s.planting_mon.startsWith(curFilter));
-  data=[...data].sort((a,b)=>a.planting_mon.localeCompare(b.planting_mon));
+  // 미래(오늘 이후) 먼저 가까운순, 과거 미기록은 뒤에 최신순
+  const _td3=today();
+  const fut=[...data].filter(s=>s.planting_mon>=_td3).sort((a,b)=>a.planting_mon.localeCompare(b.planting_mon));
+  const pst=[...data].filter(s=>s.planting_mon<_td3).sort((a,b)=>b.planting_mon.localeCompare(a.planting_mon));
+  data=[...fut,...pst];
 
   let html='', lastMonth='';
   data.forEach(s=>{
