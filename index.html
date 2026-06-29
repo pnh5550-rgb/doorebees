@@ -279,7 +279,9 @@ window.generateExcel = function(entries) {
   --G:#0a5f6e;--G2:#0d7a8c;--GL:#edf5f3;
   --bg:#faf8f3;--sf:#ffffff;--sf2:#f4f0e8;--bd:#ddd5c8;--bd2:#c8b89a;
   --tx:#1a1610;--tx2:#6a6050;--tx3:#9a9080;
-  --r:14px;--rs:10px;--sh:0 2px 10px rgba(0,0,0,.08);
+  --r:14px;--rs:10px;--sh:0 1px 3px rgba(26,22,16,.06),0 4px 14px rgba(26,22,16,.06);
+  --sh-lift:0 2px 6px rgba(26,22,16,.08),0 10px 28px rgba(26,22,16,.10);
+  --honey:#F5B301;--honey-d:#D99000;
   /* 기능별 의미 색상 (산란/선별/폐기) — 변경 없음 */
   --san:#16A34A;--san-bg:#f0fdf4;--san-t:#14532D;--san-h:#DCFCE7;
   --sak:#7C3AED;--sak-bg:#F5F3FF;--sak-t:#4C1D95;--sak-h:#EDE9FE;
@@ -291,16 +293,17 @@ window.generateExcel = function(entries) {
 html{background:#c8d8dc;}
 body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
 .app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;min-height:100vh;box-shadow:0 0 40px rgba(0,0,0,.14);}
-.hdr{background:linear-gradient(135deg,var(--G),var(--G2));color:white;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.hdr-t{font-size:17px;font-weight:700;display:flex;align-items:center;gap:7px;color:white}
+.hdr{background:linear-gradient(135deg,#0d7a8c 0%,var(--G) 55%,#084a56 100%);color:white;padding:15px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 3px 14px rgba(10,95,110,.32)}
+.hdr-t{font-size:18px;font-weight:800;display:flex;align-items:center;gap:8px;color:white;letter-spacing:-.3px}
 .hdr-s{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px}
 .hdr-r{display:flex;align-items:center;gap:6px}
 .lock-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 10px;font-size:13px;color:white;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px}
 .admin-bar{background:linear-gradient(90deg,#7C3AED,#5B21B6);color:white;padding:6px 16px;display:flex;align-items:center;gap:8px;font-size:14px}
 .admin-badge{background:rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-weight:700;display:flex;align-items:center;gap:4px}
-.tabs{display:flex;background:var(--sf);border-top:2px solid var(--bd);position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:560px;z-index:50}
-.tab{flex:1;padding:10px 2px 8px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--tx2);font-family:inherit}
-.tab.on{color:var(--san);font-weight:700}.tab i{font-size:20px}
+.tabs{display:flex;background:rgba(255,255,255,.96);backdrop-filter:blur(8px);border-top:1px solid var(--bd);position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:560px;z-index:50;box-shadow:0 -2px 12px rgba(26,22,16,.06)}
+.tab{flex:1;padding:10px 2px 8px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--tx3);font-family:inherit;font-weight:600;transition:color .12s}
+.tab.on{color:var(--G);font-weight:800}.tab i{font-size:21px}
+.tab.on i{transform:translateY(-1px)}
 .cont{flex:1;padding:12px;padding-bottom:76px}
 .sec-hdr{border-radius:var(--r);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
 .sec-hdr.san{background:linear-gradient(135deg,#0d8a60,#16A34A);color:white}
@@ -327,43 +330,55 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .seg-btn.on-sak{background:var(--sak-h);border-color:var(--sak);color:var(--sak-t)}
 .lbl{font-size:14px;color:var(--tx);margin-bottom:6px;display:block;font-weight:700}
 .rbtns{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px}
-.rbtn{padding:8px 3px;border:1.5px solid var(--bd2);background:var(--sf);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;color:var(--tx);text-align:center;font-family:inherit}
+.rbtn{padding:8px 3px;border:1.5px solid var(--bd2);background:var(--sf);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;color:var(--tx);text-align:center;font-family:inherit;transition:transform .1s,box-shadow .12s,background .12s,border-color .12s}
+.rbtn:active{transform:scale(.95)}
 .rbtn .sub{font-size:9px;margin-top:1px;color:var(--tx2);font-weight:600}
-.rbtn.s-san{background:var(--san-h);border-color:var(--san);color:var(--san-t)}
+.rbtn.s-san{background:var(--san-h);border-color:var(--san);color:var(--san-t);box-shadow:0 2px 8px rgba(22,163,74,.22)}
 .rbtn.s-sak{background:var(--sak-h);border-color:var(--sak);color:var(--sak-t)}
-.rbtn.s-na{background:#DBEAFE;border-color:#2563EB;color:#1E40AF}
+.rbtn.s-na{background:#DBEAFE;border-color:#2563EB;color:#1E40AF;box-shadow:0 2px 8px rgba(37,99,235,.22)}
 .tbtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px}
-.tbtn{padding:11px 5px;border:1.5px solid var(--bd2);background:var(--sf);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;color:var(--tx);display:flex;flex-direction:column;align-items:center;gap:3px;font-family:inherit}
-.tbtn i{font-size:19px}
-.tbtn.s-san{background:var(--san-h);border-color:var(--san);color:var(--san-t)}
-.tbtn.s-sel{background:var(--sel-bg);border-color:var(--sel);color:var(--sel-t)}
-.tbtn.s-peg{background:var(--peg-bg);border-color:var(--peg);color:var(--peg-t)}
-.tbtn.s-sak{background:var(--sak-h);border-color:var(--sak);color:var(--sak-t)}
-.tbtn.s-out{background:#FFF7ED;border-color:#F59E0B;color:#78350F}
+.tbtn{padding:12px 5px;border:1.5px solid var(--bd2);background:var(--sf);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;color:var(--tx);display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;transition:transform .1s,box-shadow .12s,background .12s,border-color .12s}
+.tbtn:active{transform:scale(.96)}
+.tbtn i{font-size:20px}
+.tbtn.s-san{background:var(--san-h);border-color:var(--san);color:var(--san-t);box-shadow:0 2px 10px rgba(22,163,74,.2)}
+.tbtn.s-sel{background:var(--sel-bg);border-color:var(--sel);color:var(--sel-t);box-shadow:0 2px 10px rgba(37,99,235,.2)}
+.tbtn.s-peg{background:var(--peg-bg);border-color:var(--peg);color:var(--peg-t);box-shadow:0 2px 10px rgba(234,88,12,.2)}
 .ainp{width:100%;padding:14px;border:2px solid var(--bd2);border-radius:var(--rs);font-size:26px;font-weight:800;text-align:center;background:var(--sf);color:var(--tx);outline:none;margin-bottom:11px;font-family:inherit}
 .ainp::placeholder{color:var(--tx3);font-weight:600}
 .ainp:focus{border-color:var(--G);box-shadow:0 0 0 3px rgba(10,95,110,.14)}
 .dinp{width:100%;padding:12px 14px;border:2px solid var(--bd2);border-radius:var(--rs);font-size:16px;font-weight:700;background:var(--sf);color:var(--tx);outline:none;margin-bottom:12px;font-family:inherit}
 .dinp:focus{border-color:var(--G);box-shadow:0 0 0 3px rgba(10,95,110,.14)}
+.in-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--sh)}
+.lbl-hint{font-size:12px;color:var(--tx3);font-weight:600;margin-left:3px}
+.lbl i{color:var(--G);font-size:15px;margin-right:2px;vertical-align:-1px}
+.in-preview{background:linear-gradient(135deg,var(--san-h),#fff);border:1.5px solid var(--san);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;box-shadow:0 4px 14px rgba(22,163,74,.14)}
+.in-preview-h{font-size:13px;font-weight:800;color:var(--san-t);margin-bottom:10px;display:flex;align-items:center;gap:5px}
+.in-preview-g{display:grid;grid-template-columns:1fr 1fr;gap:10px 8px}
+.in-preview-g>div{display:flex;flex-direction:column;gap:2px}
+.in-preview-g span{font-size:12px;color:var(--tx2);font-weight:600}
+.in-preview-g b{font-size:16px;color:var(--tx);font-weight:800}
 .pw-inp{width:100%;padding:12px;border:1.5px solid var(--bd2);border-radius:var(--rs);font-size:16px;background:var(--sf);color:var(--tx);outline:none;font-family:inherit;letter-spacing:3px}
 .prev-box{background:var(--sf2);border-radius:var(--rs);padding:9px 12px;margin-bottom:11px;font-size:14px;border:1px solid var(--bd)}
 .prev-r{display:flex;justify-content:space-between;padding:2px 0}
-.sbtn{width:100%;padding:14px;border:none;border-radius:var(--r);color:white;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit}
-.sbtn.san{background:var(--san)}.sbtn.sak{background:var(--sak)}.sbtn:disabled{background:var(--tx3);cursor:not-allowed}
+.sbtn{width:100%;padding:15px;border:none;border-radius:var(--r);color:white;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;letter-spacing:-.2px;box-shadow:0 4px 14px rgba(22,163,74,.32);transition:transform .12s,box-shadow .12s,filter .12s}
+.sbtn:active{transform:translateY(1px) scale(.99);filter:brightness(.96)}
+.sbtn.san{background:linear-gradient(135deg,#1FB257,#15803D)}.sbtn.sak{background:linear-gradient(135deg,#8B5CF6,var(--sak))}.sbtn:disabled{background:var(--tx3);cursor:not-allowed;box-shadow:none}
 .readonly-box{background:var(--sel-bg);border:1px solid var(--sel);border-radius:var(--rs);padding:9px 12px;margin-bottom:10px;font-size:14px;color:var(--sel-t);display:flex;align-items:center;gap:6px}
-.si{background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--san);border-radius:var(--r);padding:13px 14px;margin-bottom:10px;box-shadow:var(--sh)}
+.si{background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--san);border-radius:var(--r);padding:14px 15px;margin-bottom:10px;box-shadow:var(--sh);transition:transform .12s}
+.si:active{transform:scale(.99)}
 .si.sak-si{border-left:3px solid var(--sak)}
-.si-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.si-n{font-size:16px;font-weight:700}.si-m{font-size:14px;color:var(--tx);margin-top:4px;font-weight:700}
-.si-dates{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.si-db{background:var(--sf2);border-radius:var(--rs);padding:7px 9px;border:1px solid var(--bd)}
-.si-dl{font-size:12px;color:var(--tx2);margin-bottom:2px;font-weight:500}.si-dv{font-size:15px;font-weight:700}
-.si-dd{font-size:12px;margin-top:1px;font-weight:600}
+.si-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px}
+.si-n{font-size:17px;font-weight:800;letter-spacing:-.3px}.si-m{font-size:13px;color:var(--tx2);margin-top:4px;font-weight:600}
+.si-dates{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.si-db{background:var(--sf2);border-radius:var(--rs);padding:9px 11px;border:1px solid var(--bd)}
+.si-dl{font-size:12px;color:var(--tx2);margin-bottom:3px;font-weight:600}.si-dv{font-size:16px;font-weight:800;letter-spacing:-.3px}
+.si-dd{font-size:12px;margin-top:3px;font-weight:700}
 .dd-td{color:#DC2626;font-weight:800}.dd-nr{color:#EA580C;font-weight:800}.dd-sn{color:#CA8A04;font-weight:700}.dd-ft{color:var(--tx2)}.dd-ps{color:var(--tx3)}
 .si-done{border-left-color:var(--rd);background:linear-gradient(135deg,#fef5f5,#fff);}
 .si-cell-done{background:var(--rd-bg)!important;border-color:#FBCFCF!important;}
 .dd-done{color:var(--rd-t)!important;font-weight:800!important;}
-.si-ib{display:flex;align-items:center;gap:5px;padding:6px 9px;background:var(--sak-bg);border:1px solid var(--sak);border-radius:var(--rs);cursor:pointer;font-size:13px;color:var(--sak-t);margin-top:8px;font-family:inherit}
+.si-ib{display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;width:100%;background:linear-gradient(135deg,#8B5CF6,var(--sak));border:none;border-radius:var(--rs);cursor:pointer;font-size:14px;color:#fff;margin-top:10px;font-family:inherit;font-weight:700;box-shadow:0 3px 12px rgba(124,58,237,.28);transition:transform .12s}
+.si-ib:active{transform:scale(.98)}
 .past-t{text-align:center;padding:8px;font-size:14px;color:var(--tx2);cursor:pointer;border:1.5px dashed var(--bd2);border-radius:var(--rs);margin-top:5px;background:transparent;font-family:inherit;width:100%}
 .tab-inner{display:flex;gap:6px;margin-bottom:12px}
 .ti-btn{flex:1;padding:9px 6px;border:1.5px solid var(--bd2);background:var(--sf);border-radius:var(--rs);cursor:pointer;font-size:14px;font-weight:600;color:var(--tx2);text-align:center;font-family:inherit}
@@ -453,7 +468,9 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 /* 추가 컴포넌트 CSS */
 .room-layout{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
 .room-sub{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.rc{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
+.rc{background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--san);border-radius:var(--r);padding:13px 15px;box-shadow:var(--sh);transition:transform .12s,box-shadow .12s}
+.rc:active{transform:scale(.985)}
+.rc-na{border-left-color:var(--sak)}
 .rc-big{padding:16px 18px}
 .san-rc{border-left:4px solid var(--san)}
 .rc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
@@ -602,7 +619,7 @@ function SanCard({room,st,big}){
   const pct=st.rate;
   const c=pct<50?'ok':pct<75?'go':pct<90?'wn':'dg';
   return(
-    <div className={`rc san-rc${big?' rc-big':''}`}>
+    <div className={`rc san-rc${big?' rc-big':''}${room.startsWith('나')?' rc-na':''}`}>
       <div className="rc-top">
         <span className="rc-name">{room}</span>
         <span className={`badge b-${c}`}>세팅 {pct}%</span>
@@ -763,46 +780,41 @@ function SanBatchView({entries,year}){
 function BatchRates({entries,year}){
   const td=today();
   const rows=window.computeBatches(entries).filter(g=>!year||year==='전체'||g.date.slice(0,4)===year);
+  const fmtBig=d=>{const dt=new Date(d+'T00:00:00');return`${dt.getMonth()+1}/${dt.getDate()}`;};
 
   return(
     <div className="card" style={{marginBottom:10}}>
       <div className="card-hdr">
-        <span>배치별 산란 → 선별율 ({year&&year!=='전체'?year+'년':'전체'})</span>
-        <span style={{fontSize:12,color:'var(--tx2)'}}>4주차 2회 선별</span>
+        <span>배치별 사육선별율 ({year&&year!=='전체'?year+'년':'전체'})</span>
+        <span style={{fontSize:12,color:'var(--tx2)'}}>4주차 2회</span>
       </div>
-      {/* 가로 스크롤 래퍼 */}
-      <div style={{overflowX:'auto',WebkitOverflowScrolling:'touch',margin:'0 -14px',padding:'0 14px'}}>
-        <div style={{minWidth:370}}>
-      {/* 헤더 */}
-      <div style={{display:'grid',gridTemplateColumns:'48px minmax(60px,1fr) 50px 54px 54px 48px 52px',gap:6,padding:'8px 6px',background:'var(--san-h)',borderRadius:'var(--rs)',marginBottom:4,fontSize:12,fontWeight:800,color:'var(--san-t)'}}>
-        <span>세팅일</span><span>룸</span>
-        <span style={{textAlign:'right'}}>세팅</span>
-        <span style={{textAlign:'right'}}>1차선별</span>
-        <span style={{textAlign:'right'}}>2차선별</span>
-        <span style={{textAlign:'right'}}>폐기</span>
-        <span style={{textAlign:'center'}}>선별율</span>
-      </div>
-      {rows.map((g,i)=>{
-        const s1=g.s1,s2=g.s2,peg=g.peg;
-        const done=addDays(g.date,42)<td;
-        const sr=g.rate;
-        const srBg=sr===null?'transparent':sr>=45?'var(--san-h)':sr>=25?'var(--am-bg)':'var(--rd-bg)';
-        const srColor=sr===null?'var(--tx3)':sr>=45?'var(--san-t)':sr>=25?'#854D0E':'var(--rd-t)';
-        return(
-          <div key={i} style={{display:'grid',gridTemplateColumns:'48px minmax(60px,1fr) 50px 54px 54px 48px 52px',gap:6,padding:'9px 6px',borderBottom:'1px solid var(--bd)',background:i%2===0?'transparent':'var(--sf2)',alignItems:'center',fontSize:14}}>
-            <span style={{fontSize:11,color:'var(--tx2)',fontWeight:600}}>{fmtMD(g.date)}</span>
-            <span style={{fontWeight:800,color:g.merged?'var(--sak-t)':'var(--san-t)',overflow:'hidden',textOverflow:'ellipsis',fontSize:12,lineHeight:1.3}}>{g.room}</span>
-            <span style={{textAlign:'right',fontWeight:700,fontSize:13}}>{g.san.toLocaleString()}</span>
-            <span style={{textAlign:'right',fontWeight:600,color:s1>0?'#1D4ED8':'var(--tx3)',fontSize:13}}>{s1>0?s1.toLocaleString():'—'}</span>
-            <span style={{textAlign:'right',fontWeight:600,color:s2>0?'#1D4ED8':'var(--tx3)',fontSize:13}}>{s2>0?s2.toLocaleString():'—'}</span>
-            <span style={{textAlign:'right',fontWeight:600,color:peg>0?'#9D174D':'var(--tx3)',fontSize:13}}>{peg>0?peg.toLocaleString():'—'}</span>
-            <span style={{textAlign:'center',fontWeight:800,fontSize:14,padding:'3px 4px',borderRadius:5,background:srBg,color:srColor}}>
-              {sr!==null?sr+'%':done?'—':'대기'}
-            </span>
-          </div>
-        );
-      })}
-        </div>
+      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+        {rows.map((g,i)=>{
+          const s1=g.s1,s2=g.s2,peg=g.peg;
+          const done=addDays(g.date,42)<td;
+          const sr=g.rate;
+          const srBg=sr===null?'var(--sf2)':sr>=45?'var(--san)':sr>=25?'#D97706':'var(--rd)';
+          const srCol=sr===null?'var(--tx3)':'#fff';
+          const srTxt=sr===null?(done?'—':'대기'):sr+'%';
+          return(
+            <div key={i} style={{display:'flex',alignItems:'center',gap:10,border:'1px solid var(--bd)',borderLeft:`4px solid ${g.merged?'var(--sak)':'var(--san)'}`,borderRadius:10,padding:'8px 11px',background:i%2===0?'var(--sf)':'var(--sf2)'}}>
+              {/* 날짜+룸 */}
+              <div style={{minWidth:62,flexShrink:0}}>
+                <div style={{fontSize:15,fontWeight:800,letterSpacing:'-.3px',lineHeight:1.05}}>{fmtBig(g.date)}</div>
+                <div style={{fontSize:12,fontWeight:700,color:g.merged?'var(--sak-t)':'var(--san-t)',marginTop:1,whiteSpace:'nowrap'}}>{g.room}</div>
+              </div>
+              {/* 수치 */}
+              <div style={{flex:1,display:'flex',justifyContent:'space-around',gap:4,fontSize:13}}>
+                <div style={{textAlign:'center'}}><div style={{fontSize:10,color:'var(--tx3)',fontWeight:600}}>세팅</div><div style={{fontWeight:800}}>{g.san.toLocaleString()}</div></div>
+                <div style={{textAlign:'center'}}><div style={{fontSize:10,color:'var(--tx3)',fontWeight:600}}>1차</div><div style={{fontWeight:700,color:s1>0?'var(--sel-t)':'var(--tx3)'}}>{s1>0?s1.toLocaleString():'—'}</div></div>
+                <div style={{textAlign:'center'}}><div style={{fontSize:10,color:'var(--tx3)',fontWeight:600}}>2차</div><div style={{fontWeight:700,color:s2>0?'var(--sel-t)':'var(--tx3)'}}>{s2>0?s2.toLocaleString():'—'}</div></div>
+                <div style={{textAlign:'center'}}><div style={{fontSize:10,color:'var(--tx3)',fontWeight:600}}>폐기</div><div style={{fontWeight:700,color:peg>0?'var(--peg-t)':'var(--tx3)'}}>{peg>0?peg.toLocaleString():'—'}</div></div>
+              </div>
+              {/* 선별율 배지 */}
+              <div style={{flexShrink:0,fontSize:17,fontWeight:900,color:srCol,background:srBg,borderRadius:8,padding:'7px 9px',minWidth:54,textAlign:'center',letterSpacing:'-.5px'}}>{srTxt}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -991,19 +1003,20 @@ function App(){
         {/* ── 현황 ── */}
         {tab==='dash'&&(
           <div className="room-layout">
-            <div style={{background:'#1B4332',borderRadius:'var(--r)',padding:'12px 16px',marginBottom:4,boxShadow:'0 1px 6px rgba(0,0,0,.18)'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',color:'white'}}>
+            <div style={{background:'linear-gradient(135deg,#1B4332 0%,#0d5e44 60%,#0a3a2a 100%)',borderRadius:'var(--r)',padding:'16px 18px',marginBottom:6,boxShadow:'0 6px 20px rgba(11,58,42,.3)',position:'relative',overflow:'hidden'}}>
+              <div style={{position:'absolute',right:-24,top:-24,width:120,height:120,borderRadius:'50%',background:'rgba(245,179,1,.10)'}}/>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',color:'white',position:'relative'}}>
                 <div>
-                  <div style={{fontSize:13,color:'rgba(255,255,255,.65)',marginBottom:4}}>세팅 {fmt(totalSanOcc)} / {fmt(totalSanCap)}</div>
-                  <span style={{fontSize:15,color:'rgba(255,255,255,.75)'}}>여유 <b style={{fontSize:18,color:'#86EFAC',fontWeight:800}}>{fmt(totalSanAvail)}</b></span>
+                  <div style={{fontSize:12,color:'rgba(255,255,255,.6)',marginBottom:5,fontWeight:600,letterSpacing:'.3px'}}>전체 산란세팅 {fmt(totalSanOcc)} / {fmt(totalSanCap)}</div>
+                  <span style={{fontSize:15,color:'rgba(255,255,255,.8)'}}>여유 <b style={{fontSize:20,color:'#86EFAC',fontWeight:900,marginLeft:2}}>{fmt(totalSanAvail)}</b></span>
                 </div>
                 <div style={{textAlign:'right'}}>
-                  <div style={{fontSize:13,color:'rgba(255,255,255,.65)',marginBottom:2}}>세팅율</div>
-                  <div style={{fontSize:28,fontWeight:900,lineHeight:1}}>{totalSanCap>0?Math.round(totalSanOcc/totalSanCap*100):0}<span style={{fontSize:16,fontWeight:400}}>%</span></div>
+                  <div style={{fontSize:12,color:'rgba(255,255,255,.6)',marginBottom:2,fontWeight:600}}>세팅율</div>
+                  <div style={{fontSize:32,fontWeight:900,lineHeight:1,letterSpacing:'-1px'}}>{totalSanCap>0?Math.round(totalSanOcc/totalSanCap*100):0}<span style={{fontSize:17,fontWeight:500}}>%</span></div>
                 </div>
               </div>
-              <div style={{marginTop:8,background:'rgba(255,255,255,.12)',borderRadius:3,height:4,overflow:'hidden'}}>
-                <div style={{height:'100%',background:'#86EFAC',width:totalSanCap>0?Math.round(totalSanOcc/totalSanCap*100)+'%':'0%',transition:'width .5s'}}/>
+              <div style={{marginTop:11,background:'rgba(255,255,255,.15)',borderRadius:4,height:6,overflow:'hidden',position:'relative'}}>
+                <div style={{height:'100%',background:'linear-gradient(90deg,#86EFAC,#F5B301)',width:totalSanCap>0?Math.round(totalSanOcc/totalSanCap*100)+'%':'0%',transition:'width .6s',borderRadius:4}}/>
               </div>
             </div>
             <SanCard room="가2D" st={sanSt['가2D']} big={true}/>
@@ -1015,37 +1028,39 @@ function App(){
 
         {/* ── 입력 ── */}
         {tab==='input'&&(<>
-          <label className="lbl">날짜</label>
-          <input type="date" className="dinp" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
-          <label className="lbl">산란실 룸 <span style={{fontSize:13,color:'var(--tx2)',fontWeight:600}}>(숫자=여유)</span></label>
-          <div className="rbtns">
-            {SAN_RO.map(r=>{
-              const av=sanSt[r].avail;const sel=form.room===r;
-              return(<button key={r} className={`rbtn${sel?(r.startsWith('나')?' s-na':' s-san'):''}`} onClick={()=>setForm(f=>({...f,room:r}))}>
-                {r}<div className="sub">{fmt(av)}</div>
-              </button>);
-            })}
+          <div className="in-card">
+            <label className="lbl"><i className="ti ti-calendar-event"/> 날짜</label>
+            <input type="date" className="dinp" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
+            <label className="lbl"><i className="ti ti-home"/> 산란실 룸 <span className="lbl-hint">숫자=여유</span></label>
+            <div className="rbtns">
+              {SAN_RO.map(r=>{
+                const av=sanSt[r].avail;const sel=form.room===r;
+                return(<button key={r} className={`rbtn${sel?(r.startsWith('나')?' s-na':' s-san'):''}`} onClick={()=>setForm(f=>({...f,room:r}))}>
+                  {r}<div className="sub">{fmt(av)}</div>
+                </button>);
+              })}
+            </div>
+            <label className="lbl"><i className="ti ti-category"/> 종류</label>
+            <div className="tbtns">
+              {[['산란','ti-egg','s-san','산란세팅'],['사육','ti-share','s-sel','사육세팅'],['폐기','ti-trash','s-peg','산란폐기']].map(([t,ic,cls,lbl])=>(
+                <button key={t} className={`tbtn${form.type===t?' '+cls:''}`} onClick={()=>setForm(f=>({...f,type:t}))}>
+                  <i className={`ti ${ic}`}/>{lbl}
+                </button>
+              ))}
+            </div>
+            <label className="lbl"><i className="ti ti-hash"/> 수량 <span className="lbl-hint">마릿수</span></label>
+            <input type="number" className="ainp" placeholder="0" value={form.amount} min={1}
+              onChange={e=>setForm(f=>({...f,amount:e.target.value}))}
+              onKeyDown={e=>e.key==='Enter'&&isAdmin&&submitEntry()}/>
           </div>
-          <label className="lbl">종류</label>
-          <div className="tbtns">
-            {[['산란','ti-egg','s-san','산란세팅'],['사육','ti-share','s-sel','사육세팅'],['폐기','ti-trash','s-peg','산란폐기']].map(([t,ic,cls,lbl])=>(
-              <button key={t} className={`tbtn${form.type===t?' '+cls:''}`} onClick={()=>setForm(f=>({...f,type:t}))}>
-                <i className={`ti ${ic}`}/>{lbl}
-              </button>
-            ))}
-          </div>
-          <label className="lbl">수량 <span style={{fontSize:13,color:'var(--tx2)',fontWeight:600}}>(마릿수)</span></label>
-          <input type="number" className="ainp" placeholder="예: 500" value={form.amount} min={1}
-            onChange={e=>setForm(f=>({...f,amount:e.target.value}))}
-            onKeyDown={e=>e.key==='Enter'&&isAdmin&&submitEntry()}/>
           {hasPreview&&(
-            <div style={{background:'var(--san-h)',border:'1px solid var(--san)',borderRadius:'var(--r)',padding:'14px 16px',marginBottom:12}}>
-              <div style={{fontSize:13,fontWeight:700,color:'var(--san-t)',marginBottom:8}}>입력 확인</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,fontSize:15}}>
-                <div style={{color:'var(--tx2)'}}>날짜 <b style={{color:'var(--tx)'}}>{form.date}</b></div>
-                <div style={{color:'var(--tx2)'}}>룸 <b style={{color:'var(--san-t)'}}>{form.room}</b></div>
-                <div style={{color:'var(--tx2)'}}>종류 <b style={{color:'var(--tx)'}}>{typeLabel(form.type)}</b></div>
-                <div style={{color:'var(--tx2)'}}>수량 <b style={{color:'var(--san-t)',fontSize:17}}>{fmt(Number(form.amount))}</b></div>
+            <div className="in-preview">
+              <div className="in-preview-h"><i className="ti ti-eye"/> 입력 확인</div>
+              <div className="in-preview-g">
+                <div><span>날짜</span><b>{form.date}</b></div>
+                <div><span>룸</span><b style={{color:'var(--san-t)'}}>{form.room}</b></div>
+                <div><span>종류</span><b>{typeLabel(form.type)}</b></div>
+                <div><span>수량</span><b style={{color:'var(--san-t)',fontSize:18}}>{fmt(Number(form.amount))}</b></div>
               </div>
             </div>
           )}
