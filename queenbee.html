@@ -1718,20 +1718,20 @@ function renderPlantResult(){
   const td=today();
   let curFilter=_resultFilter || defaultYear('past');
   _resultFilter=curFilter;
-  const modeData=SCHED.filter(s=>s.release_fri<td);
-  const ySet=new Set(modeData.map(s=>s.release_fri.slice(0,4)));
+  const modeData=SCHED.filter(s=>s.planting_mon<td);  // 산란일 기준: 오늘 이전만
+  const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
   const years=[...ySet].sort();
   const allYears=['all',...years];
   const allLabels=['전체',...years];
   document.getElementById('resultFilter').innerHTML=allYears.map((y,i)=>`
     <button class="fbtn${curFilter===y?' on':''}" onclick="setResultFilter('${y}')">${allLabels[i]}</button>`).join('');
 
-  let data=curFilter==='all'?modeData:modeData.filter(s=>s.release_fri.startsWith(curFilter));
-  data=[...data].sort((a,b)=>b.release_fri.localeCompare(a.release_fri));  // 최신순(해제일)
+  let data=curFilter==='all'?modeData:modeData.filter(s=>s.planting_mon.startsWith(curFilter));
+  data=[...data].sort((a,b)=>b.planting_mon.localeCompare(a.planting_mon));  // 최신순(산란일)
 
   let html='', lastMonth='';
   data.forEach(s=>{
-    const ym=s.release_fri.slice(0,7);
+    const ym=s.planting_mon.slice(0,7);
     if(ym!==lastMonth){ lastMonth=ym; const[y,m]=ym.split('-'); html+=`<div class="sec">${y}년 ${parseInt(m)}월</div>`; }
     // 실제 월동해제 = 해제일(±4일) rel 이벤트 합
     const relAct=DB.events.filter(e=>e.type==='rel'&&Math.abs(dn(e.date)-dn(s.release_fri))<=4*DAY).reduce((a,e)=>a+e.qty,0);
@@ -1799,20 +1799,20 @@ function renderPlantPlan(){
   const td=today();
   let curFilter=_planFilter || defaultYear('future');
   _planFilter=curFilter;
-  const modeData=SCHED.filter(s=>s.release_fri>=td);
-  const ySet=new Set(modeData.map(s=>s.release_fri.slice(0,4)));
+  const modeData=SCHED.filter(s=>s.planting_mon>=td);  // 산란일 기준: 오늘 포함
+  const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
   const years=[...ySet].sort();
   const allYears=['all',...years];
   const allLabels=['전체',...years];
   document.getElementById('planFilter').innerHTML=allYears.map((y,i)=>`
     <button class="fbtn${curFilter===y?' on':''}" onclick="setPlanFilter('${y}')">${allLabels[i]}</button>`).join('');
 
-  let data=curFilter==='all'?modeData:modeData.filter(s=>s.release_fri.startsWith(curFilter));
+  let data=curFilter==='all'?modeData:modeData.filter(s=>s.planting_mon.startsWith(curFilter));
   data=[...data].sort((a,b)=>a.planting_mon.localeCompare(b.planting_mon));
 
   let html='', lastMonth='';
   data.forEach(s=>{
-    const ym=s.release_fri.slice(0,7);
+    const ym=s.planting_mon.slice(0,7);
     if(ym!==lastMonth){ lastMonth=ym; const[y,m]=ym.split('-'); html+=`<div class="sec">${y}년 ${parseInt(m)}월</div>`; }
     // D-day: 월동해제일, 산란세팅일 각각
     const dRel=Math.round((dn(s.release_fri)-dn(td))/DAY);
