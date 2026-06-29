@@ -25,8 +25,8 @@
   --text:#1a1610;--muted:#6a6050;--sub:#3a3020;
   --nav-h:68px;
 }
-html{min-height:100%;background:#c8d8dc;font-family:'Noto Sans KR',sans-serif;}
-body{min-height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:17px;overflow-x:hidden;max-width:620px;margin:0 auto;box-shadow:0 0 30px rgba(0,0,0,.18);}
+html{min-height:100%;background:#c8d8dc;font-family:'Noto Sans KR',sans-serif;overflow-x:hidden;}
+body{min-height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:17px;max-width:620px;margin:0 auto;box-shadow:0 0 30px rgba(0,0,0,.18);}
 body{padding-bottom:calc(var(--nav-h) + 8px);}
 
 /* ── 헤더 ── */
@@ -58,7 +58,7 @@ body{padding-bottom:calc(var(--nav-h) + 8px);}
 .sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:13px;}
 .sb{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 15px;}
 .sb.hi{background:#ede8df;border-color:#c8b89a;}
-.sv{font-size:28px;font-weight:900;line-height:1.1;letter-spacing:-.5px;}
+.sv{font-size:22px;font-weight:900;line-height:1.1;letter-spacing:-.5px;}
 .sv.g{color:var(--G);}
 .sv.a{color:var(--A);}
 .sv.r{color:var(--R);}
@@ -169,7 +169,7 @@ textarea{resize:none;height:68px;font-size:14px;}
 .rec{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:8px;}
 .rec:last-child{border-bottom:none;}
 .rec-date{font-size:16px;color:var(--sub);min-width:80px;font-weight:700;}
-.rec-qty{font-size:20px;font-weight:900;min-width:64px;text-align:right;}
+.rec-qty{font-size:18px;font-weight:900;min-width:64px;text-align:right;}
 .rec-note{font-size:15px;color:var(--sub);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rec-del{font-size:13px;color:var(--R);border:1px solid #f5c0bc;border-radius:7px;padding:6px 11px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 
@@ -264,6 +264,11 @@ textarea{resize:none;height:68px;font-size:14px;}
 .rc-plant.on{background:#5a9e1a !important;color:#fff !important;border-color:#5a9e1a !important;}
 .rc-death{color:#c0392b;border-color:#c0392b;}
 .rc-death.on{background:#c0392b !important;color:#fff !important;border-color:#c0392b !important;}
+
+/* 계획표 뷰 전환 버튼 */
+.pv-tab{flex:0 0 auto;padding:10px 20px;border-radius:22px;border:1.5px solid var(--border);background:#fff;color:var(--sub);font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .15s;}
+.pv-tab.on{background:#0a5f6e;color:#fff;border-color:#0a5f6e;box-shadow:0 2px 8px rgba(10,95,110,.25);}
+.pv-tab#pv-plant.on,.pv-tab#rv-plant.on{background:#5a9e1a;border-color:#5a9e1a;box-shadow:0 2px 8px rgba(90,158,26,.25);}
 </style>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -493,13 +498,33 @@ textarea{resize:none;height:68px;font-size:14px;}
 
 <!-- 계획표 -->
 <div class="pg" id="pg-result">
-  <div style="font-size:13px;color:var(--muted);margin-bottom:10px;padding:0 2px;">📊 지난 채집·월동 실적 (최근순)</div>
+  <div style="position:sticky;top:66px;z-index:50;background:linear-gradient(135deg,#8a6d3b,#6b5430);color:#fff;border-radius:12px;padding:13px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(107,84,48,.35);">
+    <span style="font-size:22px;">📊</span>
+    <div>
+      <div style="font-size:16px;font-weight:900;">지난 실적</div>
+      <div style="font-size:12px;opacity:.85;">이미 끝난 채집·월동 결과 (최근순)</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
+    <button class="pv-tab on" id="rv-main" onclick="setResultView('main')">🐝 채집/월동입고</button>
+    <button class="pv-tab" id="rv-plant" onclick="setResultView('plant')">🌱 월동해제/산란</button>
+  </div>
   <div class="filter-row" id="resultFilter"></div>
   <div id="resultList"></div>
 </div>
 
 <div class="pg" id="pg-plan">
-  <div style="font-size:13px;color:var(--muted);margin-bottom:10px;padding:0 2px;">📋 오늘 이후 예정 계획</div>
+  <div style="position:sticky;top:66px;z-index:50;background:linear-gradient(135deg,#0a5f6e,#0a4750);color:#fff;border-radius:12px;padding:13px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(10,95,110,.35);">
+    <span style="font-size:22px;">📋</span>
+    <div>
+      <div style="font-size:16px;font-weight:900;">예정 계획</div>
+      <div style="font-size:12px;opacity:.85;">앞으로의 채집·월동 일정 (가까운순)</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
+    <button class="pv-tab on" id="pv-main" onclick="setPlanView('main')">🐝 채집/월동입고</button>
+    <button class="pv-tab" id="pv-plant" onclick="setPlanView('plant')">🌱 월동해제/산란</button>
+  </div>
   <div class="filter-row" id="planFilter"></div>
   <div id="planList"></div>
 </div>
@@ -1409,7 +1434,7 @@ function renderStock(){
             ${s?`<div style="font-size:15px;color:var(--sub);font-weight:600;margin-top:4px;">해제 ${fmtKo(s.release_fri)} → 산란 ${fmtKo(s.planting_mon)}</div>`:''}
           </div>
           <div style="text-align:right;">
-            <div style="font-size:26px;font-weight:900;color:${barColor};">${comma(rem)}</div>
+            <div style="font-size:18px;font-weight:900;color:${barColor};">${comma(rem)}</div>
             <div style="font-size:13px;color:var(--muted);font-weight:600;">잔량</div>
           </div>
         </div>
@@ -1506,9 +1531,14 @@ function exportCSV(){
    계획표 렌더 (최신순)
 ═══════════════════════════════════ */
 let _planFilter='';
+let _planView='main';  // 'main'=채집·월동, 'plant'=산란세팅
+let _resultView='main';  // 실적 탭도 동일
 function renderPlan(mode){
   mode = mode || 'future';  // 'future'=계획표(미래), 'past'=실적(과거)
   const isPastMode = (mode==='past');
+  // 산란세팅(월동해제/산란) 뷰면 별도 렌더
+  if(!isPastMode && _planView==='plant'){ renderPlantPlan(); return; }
+  if(isPastMode && _resultView==='plant'){ renderPlantResult(); return; }
   const td=today();
   const filterId = isPastMode?'resultFilter':'planFilter';
   const listId = isPastMode?'resultList':'planList';
@@ -1602,7 +1632,7 @@ function renderPlan(mode){
     const daysFromCollect = Math.round((dn(td)-dn(s.collection_thu))/DAY);
     let cardBgColor, cardTextColor, cardSubColor, boxBg, boxBg2, cardBorder, cardShadow, cardLabel;
 
-    if(isPendingWinter){
+    if(isPendingWinter && !isPastMode){
       // 채집 후 월동 전 - 홈 배너와 동일 색상
       const daysToWin = Math.round((dn(addDays(s.collection_thu,14))-dn(td))/DAY);
       if(daysFromCollect===0){       cardBgColor='#0a5f6e'; cardBorder='2px solid rgba(255,255,255,.3)'; cardShadow='0 4px 16px rgba(10,95,110,.3)'; cardLabel='D-day';}
@@ -1610,14 +1640,14 @@ function renderPlan(mode){
       else {                         cardBgColor='#1e7e34'; cardBorder='1.5px solid rgba(255,255,255,.2)'; cardShadow='none'; cardLabel=`D+${daysFromCollect}`;}
       cardTextColor='#fff'; cardSubColor='rgba(255,255,255,.85)';
       boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
-    } else if(isThisWeek){
+    } else if(isThisWeek && !isPastMode){
       cardBgColor='#0a5f6e'; cardTextColor='#fff'; cardSubColor='rgba(255,255,255,.85)';
       boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
       cardBorder='2px solid rgba(255,255,255,.3)'; cardShadow='0 4px 16px rgba(10,95,110,.3)'; cardLabel='D-day';
-    } else if(isPast){
-      cardBgColor='#f5f5f0'; cardTextColor='#888'; cardSubColor='#aaa';
-      boxBg='rgba(0,0,0,.04)'; boxBg2='rgba(0,0,0,.04)';
-      cardBorder='1.5px solid #e0ddd6'; cardShadow='none'; cardLabel='완료';
+    } else if(isPast || isPastMode){
+      cardBgColor='#f3ece0'; cardTextColor='#6b5430'; cardSubColor='#a08c6a';
+      boxBg='rgba(107,84,48,.08)'; boxBg2='rgba(107,84,48,.08)';
+      cardBorder='1.5px solid #ddd0b8'; cardShadow='none'; cardLabel='완료';
     } else {
       // 미래 - 오늘 기준 채집일까지 D-N
       const daysToCollect = Math.round((dn(s.collection_thu)-dn(td))/DAY);
@@ -1635,20 +1665,20 @@ function renderPlan(mode){
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
         <div>
           <div style="font-size:12px;font-weight:800;color:${cardSubColor};margin-bottom:3px;">${(()=>{const dc=Math.round((dn(s.collection_thu)-dn(td))/DAY);return dc>0?`D-${dc}`:dc===0?'D-day':`D+${Math.abs(dc)}`;})()}</div>
-          <div style="font-size:17px;font-weight:900;color:${cardTextColor};">${fmtKo(s.collection_thu)} 채집</div>
+          <div style="font-size:16px;font-weight:900;color:${cardTextColor};">${fmtKo(s.collection_thu)} 채집</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:12px;font-weight:800;color:${cardSubColor};margin-bottom:3px;">${(()=>{const dw=Math.round((dn(addDays(s.collection_thu,14))-dn(td))/DAY);return dw>0?`D-${dw}`:dw===0?'D-day':`D+${Math.abs(dw)}`;})()}</div>
-          <div style="font-size:17px;font-weight:900;color:${cardTextColor};opacity:${isPast?'0.5':'1'};">${fmtKo(addDays(s.collection_thu,14))} 월동</div>
+          <div style="font-size:16px;font-weight:900;color:${cardTextColor};opacity:${isPast?'0.5':'1'};">${fmtKo(addDays(s.collection_thu,14))} 월동</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
-        <div style="background:${boxBg};border-radius:9px;padding:8px 10px;text-align:center;">
-          <div style="font-size:20px;font-weight:900;color:${isPendingWinter||isThisWeek?'#fff':'var(--G)'};">${comma(s.collect_target)}</div>
+        <div style="background:${boxBg};border-radius:9px;padding:7px 9px;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:${isPastMode?'#6b5430':(isPendingWinter||isThisWeek?'#fff':'var(--G)')};">${comma(s.collect_target)}</div>
           <div style="font-size:12px;color:${cardSubColor};margin-top:2px;font-weight:700;">채집 권장수량</div>
         </div>
-        <div style="background:${boxBg2};border-radius:9px;padding:8px 10px;text-align:center;">
-          <div style="font-size:20px;font-weight:900;color:${isPendingWinter||isThisWeek?'#fff':'var(--B)'};">${comma(s.wintering_target)}</div>
+        <div style="background:${boxBg2};border-radius:9px;padding:7px 9px;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:${isPastMode?'#6b5430':(isPendingWinter||isThisWeek?'#fff':'var(--B)')};">${comma(s.wintering_target)}</div>
           <div style="font-size:12px;color:${cardSubColor};margin-top:2px;font-weight:700;">월동 권장수량</div>
         </div>
       </div>
@@ -1676,7 +1706,153 @@ let _resultFilter='';
 function setResultFilter(f){ _resultFilter=f; renderResult(); }
 function renderResult(){ renderPlan('past'); }
 
-// 탭 진입 시 기본 연도: 계획표=가장 가까운 미래 연도, 실적=가장 최근 과거 연도
+function setResultView(v){
+  _resultView=v;
+  document.getElementById('rv-main').classList.toggle('on', v==='main');
+  document.getElementById('rv-plant').classList.toggle('on', v==='plant');
+  renderPlan('past');
+}
+
+// 실적: 월동해제·산란 (달성률 포함, 과거만, 최신순)
+function renderPlantResult(){
+  const td=today();
+  let curFilter=_resultFilter || defaultYear('past');
+  _resultFilter=curFilter;
+  const modeData=SCHED.filter(s=>s.planting_mon<td);
+  const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
+  const years=[...ySet].sort();
+  const allYears=['all',...years];
+  const allLabels=['전체',...years];
+  document.getElementById('resultFilter').innerHTML=allYears.map((y,i)=>`
+    <button class="fbtn${curFilter===y?' on':''}" onclick="setResultFilter('${y}')">${allLabels[i]}</button>`).join('');
+
+  let data=curFilter==='all'?modeData:modeData.filter(s=>s.planting_mon.startsWith(curFilter));
+  data=[...data].sort((a,b)=>b.planting_mon.localeCompare(a.planting_mon));  // 최신순
+
+  let html='', lastMonth='';
+  data.forEach(s=>{
+    const ym=s.planting_mon.slice(0,7);
+    if(ym!==lastMonth){ lastMonth=ym; const[y,m]=ym.split('-'); html+=`<div class="sec">${y}년 ${parseInt(m)}월</div>`; }
+    // 실제 월동해제 = 해제일(±4일) rel 이벤트 합
+    const relAct=DB.events.filter(e=>e.type==='rel'&&Math.abs(dn(e.date)-dn(s.release_fri))<=4*DAY).reduce((a,e)=>a+e.qty,0);
+    // 실제 산란 = 산란일(±4일) plant 이벤트 합
+    const plAct=DB.events.filter(e=>e.type==='plant'&&Math.abs(dn(e.date)-dn(s.planting_mon))<=4*DAY).reduce((a,e)=>a+e.qty,0);
+    const relPct=relAct>0?Math.round(relAct/s.wintering_target*100):0;
+    const plPct=plAct>0?Math.round(plAct/s.planting_qty*100):0;
+    const relBar=Math.min(relPct,100), plBar=Math.min(plPct,100);
+    html+=`<div style="border-radius:13px;padding:12px 14px;margin-bottom:9px;background:#f3ece0;border:1.5px solid #ddd0b8;box-shadow:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:11px;font-weight:800;color:#a08c6a;background:rgba(107,84,48,.1);padding:2px 8px;border-radius:5px;">완료</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
+        <div>
+          <div style="font-size:16px;font-weight:900;color:#1a3a5d;">${fmtKo(s.release_fri)} 해제</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:16px;font-weight:900;color:#3a5a1a;">${fmtKo(s.planting_mon)} 산란</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div style="background:#eef4f9;border-radius:9px;padding:7px 9px;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:#1a5fa0;">${comma(s.wintering_target)}</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px;font-weight:700;">월동해제 권장</div>
+        </div>
+        <div style="background:#f1f7e8;border-radius:9px;padding:7px 9px;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:#5a9e1a;">${comma(s.planting_qty)}</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px;font-weight:700;">산란 목표수량</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+        <div>
+          <div style="background:#e8eef2;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${relBar}%;background:#1a5fa0;border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:#1a3a5d;display:flex;justify-content:space-between;"><span>해제 ${comma(relAct)}/${comma(s.wintering_target)}</span><span>${relAct>0?relPct+'%':'-'}</span></div>
+        </div>
+        <div>
+          <div style="background:#eef4e2;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${plBar}%;background:#5a9e1a;border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:#3a5a1a;display:flex;justify-content:space-between;"><span>산란 ${comma(plAct)}/${comma(s.planting_qty)}</span><span>${plAct>0?plPct+'%':'-'}</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        <div style="background:#f0f3f7;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#3a4a5a;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
+        <span style="font-size:11px;color:var(--muted);">→</span>
+        <div style="background:#f0f3f7;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#3a4a5a;">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>
+        <span style="font-size:11px;color:var(--muted);">→</span>
+        <div style="background:#eef4f9;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#1a3a5d;border:1.5px solid #b8d0e8;">🔓 해제 ${fmtKo(s.release_fri)}</div>
+        <span style="font-size:11px;color:var(--muted);">→</span>
+        <div style="background:#f1f7e8;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#3a5a1a;border:1.5px solid #c5e0a0;">🌱 산란 ${fmtKo(s.planting_mon)}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('resultList').innerHTML=html||'<div class="empty">지난 월동해제·산란 실적이 없습니다</div>';
+}
+
+function setPlanView(v){
+  _planView=v;
+  document.getElementById('pv-main').classList.toggle('on', v==='main');
+  document.getElementById('pv-plant').classList.toggle('on', v==='plant');
+  // 산란세팅 뷰일 때 연도필터/목록 전환
+  renderPlan('future');
+}
+
+// 산란세팅 계획만 월별로 표시 (실적 없이, 계획 수량만)
+function renderPlantPlan(){
+  const td=today();
+  let curFilter=_planFilter || defaultYear('future');
+  _planFilter=curFilter;
+  const modeData=SCHED.filter(s=>s.planting_mon>=td);
+  const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
+  const years=[...ySet].sort();
+  const allYears=['all',...years];
+  const allLabels=['전체',...years];
+  document.getElementById('planFilter').innerHTML=allYears.map((y,i)=>`
+    <button class="fbtn${curFilter===y?' on':''}" onclick="setPlanFilter('${y}')">${allLabels[i]}</button>`).join('');
+
+  let data=curFilter==='all'?modeData:modeData.filter(s=>s.planting_mon.startsWith(curFilter));
+  data=[...data].sort((a,b)=>a.planting_mon.localeCompare(b.planting_mon));
+
+  let html='', lastMonth='';
+  data.forEach(s=>{
+    const ym=s.planting_mon.slice(0,7);
+    if(ym!==lastMonth){ lastMonth=ym; const[y,m]=ym.split('-'); html+=`<div class="sec">${y}년 ${parseInt(m)}월</div>`; }
+    // D-day: 월동해제일, 산란세팅일 각각
+    const dRel=Math.round((dn(s.release_fri)-dn(td))/DAY);
+    const dRelL=dRel>0?`D-${dRel}`:dRel===0?'D-day':`D+${Math.abs(dRel)}`;
+    const dPl=Math.round((dn(s.planting_mon)-dn(td))/DAY);
+    const dPlL=dPl>0?`D-${dPl}`:dPl===0?'D-day':`D+${Math.abs(dPl)}`;
+    html+=`<div style="border-radius:13px;padding:12px 14px;margin-bottom:9px;background:#fff;border:1.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.04);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#1a5fa0;margin-bottom:3px;">${dRelL}</div>
+          <div style="font-size:16px;font-weight:900;color:#1a3a5d;">${fmtKo(s.release_fri)} 해제</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:12px;font-weight:800;color:#5a9e1a;margin-bottom:3px;">${dPlL}</div>
+          <div style="font-size:16px;font-weight:900;color:#3a5a1a;">${fmtKo(s.planting_mon)} 산란</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+        <div style="background:#eef4f9;border-radius:9px;padding:7px 9px;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:#1a5fa0;">${comma(s.wintering_target)}</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px;font-weight:700;">월동해제 권장</div>
+        </div>
+        <div style="background:#f1f7e8;border-radius:9px;padding:7px 9px;text-align:center;">
+          <div style="font-size:18px;font-weight:900;color:#5a9e1a;">${comma(s.planting_qty)}</div>
+          <div style="font-size:12px;color:var(--sub);margin-top:2px;font-weight:700;">산란 목표수량</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        <div style="background:#f0f3f7;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#3a4a5a;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
+        <span style="font-size:11px;color:var(--muted);">→</span>
+        <div style="background:#f0f3f7;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#3a4a5a;">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>
+        <span style="font-size:11px;color:var(--muted);">→</span>
+        <div style="background:#eef4f9;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#1a3a5d;border:1.5px solid #b8d0e8;">🔓 해제 ${fmtKo(s.release_fri)}</div>
+        <span style="font-size:11px;color:var(--muted);">→</span>
+        <div style="background:#f1f7e8;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#3a5a1a;border:1.5px solid #c5e0a0;">🌱 산란 ${fmtKo(s.planting_mon)}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('planList').innerHTML=html||'<div class="empty">예정된 월동해제·산란 계획이 없습니다</div>';
+}
 function defaultYear(mode){
   const td=today();
   const arr = mode==='past'
@@ -2117,8 +2293,18 @@ function goTab(id){
   window.scrollTo(0,0);
   if(id==='home') renderHome();
   if(id==='stock') renderStock();
-  if(id==='plan'){ _planFilter=defaultYear('future'); renderPlan('future'); }
-  if(id==='result'){ _resultFilter=defaultYear('past'); renderResult(); }
+  if(id==='plan'){
+    _planView='main'; _planFilter=defaultYear('future');
+    const pm=document.getElementById('pv-main'), pp=document.getElementById('pv-plant');
+    if(pm) pm.classList.add('on'); if(pp) pp.classList.remove('on');
+    renderPlan('future');
+  }
+  if(id==='result'){
+    _resultView='main'; _resultFilter=defaultYear('past');
+    const rm=document.getElementById('rv-main'), rp=document.getElementById('rv-plant');
+    if(rm) rm.classList.add('on'); if(rp) rp.classList.remove('on');
+    renderResult();
+  }
   if(id==='cfg'){ applySettings(); renderEditList(); renderUpdYear(); }
   if(id==='input'){
     const td=today();
