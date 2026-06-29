@@ -1580,7 +1580,7 @@ function renderPlan(mode){
 
     let badge='', progHtml='';
     // 어두운 배경 카드 여부 (채집 후 월동 전) — 진행바 글씨 색 결정용
-    const _isPendingDark = colAct>0 && dn(td)>=dn(s.collection_thu) && dn(td)<dn(addDays(s.collection_thu,14));
+    const _isPendingDark = !isPastMode && colAct>0 && dn(td)>=dn(s.collection_thu) && dn(td)<dn(addDays(s.collection_thu,14));
     if(colAct>0||winAct>0){
       // 채집 달성률
       const cDiff=colAct-s.collect_target, cPct=colAct>0?Math.round(colAct/s.collect_target*100):0, cBar=Math.min(cPct,100);
@@ -1645,9 +1645,9 @@ function renderPlan(mode){
       boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
       cardBorder='2px solid rgba(255,255,255,.3)'; cardShadow='0 4px 16px rgba(10,95,110,.3)'; cardLabel='D-day';
     } else if(isPast || isPastMode){
-      cardBgColor='#f3ece0'; cardTextColor='#6b5430'; cardSubColor='#a08c6a';
-      boxBg='rgba(107,84,48,.08)'; boxBg2='rgba(107,84,48,.08)';
-      cardBorder='1.5px solid #ddd0b8'; cardShadow='none'; cardLabel='완료';
+      cardBgColor='#faf6ef'; cardTextColor='#1a1610'; cardSubColor='var(--sub)';
+      boxBg='#f5f0e8'; boxBg2='#eaf0f8';
+      cardBorder='1.5px solid #e5ddd0'; cardShadow='none'; cardLabel='완료';
     } else {
       // 미래 - 오늘 기준 채집일까지 D-N
       const daysToCollect = Math.round((dn(s.collection_thu)-dn(td))/DAY);
@@ -1674,11 +1674,11 @@ function renderPlan(mode){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
         <div style="background:${boxBg};border-radius:9px;padding:7px 9px;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:${isPastMode?'#6b5430':(isPendingWinter||isThisWeek?'#fff':'var(--G)')};">${comma(s.collect_target)}</div>
+          <div style="font-size:18px;font-weight:900;color:${(isPendingWinter||isThisWeek)&&!isPastMode?'#fff':'var(--G)'};">${comma(s.collect_target)}</div>
           <div style="font-size:12px;color:${cardSubColor};margin-top:2px;font-weight:700;">채집 권장수량</div>
         </div>
         <div style="background:${boxBg2};border-radius:9px;padding:7px 9px;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:${isPastMode?'#6b5430':(isPendingWinter||isThisWeek?'#fff':'var(--B)')};">${comma(s.wintering_target)}</div>
+          <div style="font-size:18px;font-weight:900;color:${(isPendingWinter||isThisWeek)&&!isPastMode?'#fff':'var(--B)'};">${comma(s.wintering_target)}</div>
           <div style="font-size:12px;color:${cardSubColor};margin-top:2px;font-weight:700;">월동 권장수량</div>
         </div>
       </div>
@@ -1718,20 +1718,20 @@ function renderPlantResult(){
   const td=today();
   let curFilter=_resultFilter || defaultYear('past');
   _resultFilter=curFilter;
-  const modeData=SCHED.filter(s=>s.planting_mon<td);
-  const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
+  const modeData=SCHED.filter(s=>s.release_fri<td);
+  const ySet=new Set(modeData.map(s=>s.release_fri.slice(0,4)));
   const years=[...ySet].sort();
   const allYears=['all',...years];
   const allLabels=['전체',...years];
   document.getElementById('resultFilter').innerHTML=allYears.map((y,i)=>`
     <button class="fbtn${curFilter===y?' on':''}" onclick="setResultFilter('${y}')">${allLabels[i]}</button>`).join('');
 
-  let data=curFilter==='all'?modeData:modeData.filter(s=>s.planting_mon.startsWith(curFilter));
-  data=[...data].sort((a,b)=>b.planting_mon.localeCompare(a.planting_mon));  // 최신순
+  let data=curFilter==='all'?modeData:modeData.filter(s=>s.release_fri.startsWith(curFilter));
+  data=[...data].sort((a,b)=>b.release_fri.localeCompare(a.release_fri));  // 최신순(해제일)
 
   let html='', lastMonth='';
   data.forEach(s=>{
-    const ym=s.planting_mon.slice(0,7);
+    const ym=s.release_fri.slice(0,7);
     if(ym!==lastMonth){ lastMonth=ym; const[y,m]=ym.split('-'); html+=`<div class="sec">${y}년 ${parseInt(m)}월</div>`; }
     // 실제 월동해제 = 해제일(±4일) rel 이벤트 합
     const relAct=DB.events.filter(e=>e.type==='rel'&&Math.abs(dn(e.date)-dn(s.release_fri))<=4*DAY).reduce((a,e)=>a+e.qty,0);
@@ -1799,20 +1799,20 @@ function renderPlantPlan(){
   const td=today();
   let curFilter=_planFilter || defaultYear('future');
   _planFilter=curFilter;
-  const modeData=SCHED.filter(s=>s.planting_mon>=td);
-  const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
+  const modeData=SCHED.filter(s=>s.release_fri>=td);
+  const ySet=new Set(modeData.map(s=>s.release_fri.slice(0,4)));
   const years=[...ySet].sort();
   const allYears=['all',...years];
   const allLabels=['전체',...years];
   document.getElementById('planFilter').innerHTML=allYears.map((y,i)=>`
     <button class="fbtn${curFilter===y?' on':''}" onclick="setPlanFilter('${y}')">${allLabels[i]}</button>`).join('');
 
-  let data=curFilter==='all'?modeData:modeData.filter(s=>s.planting_mon.startsWith(curFilter));
+  let data=curFilter==='all'?modeData:modeData.filter(s=>s.release_fri.startsWith(curFilter));
   data=[...data].sort((a,b)=>a.planting_mon.localeCompare(b.planting_mon));
 
   let html='', lastMonth='';
   data.forEach(s=>{
-    const ym=s.planting_mon.slice(0,7);
+    const ym=s.release_fri.slice(0,7);
     if(ym!==lastMonth){ lastMonth=ym; const[y,m]=ym.split('-'); html+=`<div class="sec">${y}년 ${parseInt(m)}월</div>`; }
     // D-day: 월동해제일, 산란세팅일 각각
     const dRel=Math.round((dn(s.release_fri)-dn(td))/DAY);
