@@ -393,11 +393,12 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .stat-c{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:9px;text-align:center;box-shadow:var(--sh)}
 .stat-l{font-size:12px;color:var(--tx2);margin-bottom:2px}.stat-v{font-size:20px;font-weight:700}
 .chart-wrap{overflow-x:auto;padding-bottom:4px}
-.chart-area{display:flex;align-items:flex-end;padding:6px 2px 0;gap:3px;min-width:max-content}
+.chart-area{display:flex;align-items:flex-end;padding:6px 2px 0;gap:8px;min-width:max-content}
 .chart-col{display:flex;flex-direction:column;align-items:center}
-.chart-bars{display:flex;align-items:flex-end;gap:2px;height:100px}
-.chart-bar{border-radius:3px 3px 0 0;min-height:2px;width:10px}
-.chart-x{font-size:11px;color:var(--tx2);margin-top:3px;white-space:nowrap}
+.chart-bars{display:flex;align-items:flex-end;gap:3px;height:120px}
+.chart-bar{border-radius:4px 4px 0 0;min-height:2px;width:18px}
+.chart-bar:last-child{width:11px}
+.chart-x{font-size:12px;color:var(--tx2);margin-top:4px;white-space:nowrap;font-weight:700}
 .leg{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}
 .leg-i{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--tx2)}
 .leg-b{width:10px;height:10px;border-radius:2px;flex-shrink:0}
@@ -407,13 +408,13 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .fbtn{padding:5px 11px;border:1.5px solid var(--bd2);background:var(--sf);border-radius:20px;font-size:13px;cursor:pointer;white-space:nowrap;color:var(--tx2);font-family:inherit}
 .fbtn.on{background:var(--san);border-color:var(--san);color:white;font-weight:600}
 .fbtn.on-sak{background:var(--sak);border-color:var(--sak);color:white;font-weight:600}
-.hi{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:9px 12px;margin-bottom:5px;display:flex;align-items:center;gap:8px;box-shadow:var(--sh)}
+.hi{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px 13px;margin-bottom:7px;display:flex;align-items:center;gap:11px;box-shadow:var(--sh)}
 .hi.sak-hi{border-left:3px solid var(--sak)}
-.hi-dt{font-size:13px;color:var(--tx2);min-width:44px}.hi-rm{font-size:14px;font-weight:700;min-width:32px}
-.hi-b{font-size:12px;padding:2px 7px;border-radius:20px;font-weight:600;min-width:34px;text-align:center}
+.hi-dt{display:flex;flex-direction:column;min-width:42px;line-height:1.15}.hi-yr{font-size:11px;color:var(--tx3);font-weight:700}.hi-md{font-size:16px;color:var(--tx);font-weight:800;letter-spacing:-.3px}.hi-rm{font-size:16px;font-weight:800;min-width:38px}
+.hi-b{font-size:13px;padding:3px 9px;border-radius:20px;font-weight:700;min-width:38px;text-align:center}
 .b-san{background:var(--san-h);color:var(--san-t)}.b-sel{background:var(--sel-bg);color:var(--sel-t)}.b-peg{background:var(--peg-bg);color:var(--peg-t)}
 .b-sak2{background:var(--sak-h);color:var(--sak-t)}.b-out{background:#FFF7ED;color:#78350F}.b-spg{background:#FEE2E2;color:#991B1B}
-.hi-a{font-size:15px;font-weight:700;flex:1;text-align:right}
+.hi-a{font-size:17px;font-weight:800;flex:1;text-align:right;letter-spacing:-.3px}
 .del{background:none;border:none;cursor:pointer;color:var(--tx3);padding:3px;font-family:inherit;font-size:14px}
 .del:hover{color:var(--rd)}.edit-btn{background:none;border:none;cursor:pointer;color:var(--sel-t);padding:3px;font-family:inherit;font-size:14px;opacity:.8}
 .edit-btn:hover{opacity:1}
@@ -476,7 +477,7 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .rc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .rc-name{font-size:17px;font-weight:900;color:var(--tx)}
 .rc-big .rc-name{font-size:22px}
-.rc-stats{display:grid;grid-template-columns:auto auto 1fr;align-items:end;gap:4px 12px;margin-top:8px}
+.rc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;align-items:end;gap:4px;margin-top:9px}
 .rc-sl{font-size:12px;color:var(--tx2);font-weight:600;margin-bottom:2px;white-space:nowrap}
 .rc-sv{font-size:19px;font-weight:800;color:var(--tx)}
 .rc-big .rc-sv{font-size:25px}
@@ -513,10 +514,10 @@ body{font-size:16px;-webkit-text-size-adjust:100%;font-family:'Noto Sans KR','�
 .readonly-box{font-size:15px!important;}
 /* 이력 */
 .hi{font-size:15px!important;}
-.hi-dt{font-size:14px!important;}
-.hi-rm{font-size:15px!important;}
-.hi-b{font-size:14px!important;padding:4px 8px!important;}
-.hi-a{font-size:15px!important;}
+.hi-md{font-size:17px!important;}
+.hi-rm{font-size:16px!important;}
+.hi-b{font-size:14px!important;padding:4px 9px!important;}
+.hi-a{font-size:17px!important;}
 .fbar{gap:6px!important;}
 .fbtn{font-size:14px!important;padding:8px 12px!important;}
 .cn{font-size:14px!important;}
@@ -626,10 +627,10 @@ function SanCard({room,st,big}){
       </div>
       <div className="bar-bg"><div className={`bar-fill bar-${c}`} style={{width:`${Math.min(100,pct)}%`}}/></div>
       <div className="rc-stats">
-        <div><div className="rc-sl">현재세팅</div><b className="rc-sv sv-occ">{fmt(st.occ)}</b></div>
-        <div><div className="rc-sl">여유</div><b className={`rc-sv${st.avail<200?' sv-low':''}`}>{fmt(st.avail)}</b></div>
+        <div style={{textAlign:'left'}}><div className="rc-sl">현재세팅</div><b className="rc-sv sv-occ">{fmt(st.occ)}</b></div>
+        <div style={{textAlign:'center'}}><div className="rc-sl">여유</div><b className={`rc-sv${st.avail<200?' sv-low':''}`}>{fmt(st.avail)}</b></div>
+        <div style={{textAlign:'right'}}><div className="rc-sl" style={{color:'var(--tx3)'}}>총</div><b className="rc-sv" style={{color:'var(--tx3)',fontWeight:700}}>{fmt(st.cap)}</b></div>
       </div>
-      <div style={{marginTop:6,fontSize:13,color:'var(--tx3)',fontWeight:700,textAlign:'right'}}>총 {fmt(st.cap)}</div>
     </div>
   );
 }
@@ -780,7 +781,8 @@ function SanBatchView({entries,year}){
 function BatchRates({entries,year}){
   const td=today();
   const rows=window.computeBatches(entries).filter(g=>!year||year==='전체'||g.date.slice(0,4)===year);
-  const fmtBig=d=>{const dt=new Date(d+'T00:00:00');return`${dt.getMonth()+1}/${dt.getDate()}`;};
+  const fmtMD2=d=>{const dt=new Date(d+'T00:00:00');return`${dt.getMonth()+1}/${dt.getDate()}`;};
+  const fmtYr=d=>d.slice(0,4);
 
   return(
     <div className="card" style={{marginBottom:10}}>
@@ -788,7 +790,7 @@ function BatchRates({entries,year}){
         <span>배치별 사육선별율 ({year&&year!=='전체'?year+'년':'전체'})</span>
         <span style={{fontSize:12,color:'var(--tx2)'}}>4주차 2회</span>
       </div>
-      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+      <div style={{display:'flex',flexDirection:'column',gap:8}}>
         {rows.map((g,i)=>{
           const s1=g.s1,s2=g.s2,peg=g.peg;
           const done=addDays(g.date,42)<td;
@@ -796,22 +798,31 @@ function BatchRates({entries,year}){
           const srBg=sr===null?'var(--sf2)':sr>=45?'var(--san)':sr>=25?'#D97706':'var(--rd)';
           const srCol=sr===null?'var(--tx3)':'#fff';
           const srTxt=sr===null?(done?'—':'대기'):sr+'%';
+          const roomList=g.room.split('+');
           return(
-            <div key={i} style={{display:'flex',alignItems:'center',gap:10,border:'1px solid var(--bd)',borderLeft:`4px solid ${g.merged?'var(--sak)':'var(--san)'}`,borderRadius:10,padding:'8px 11px',background:i%2===0?'var(--sf)':'var(--sf2)'}}>
-              {/* 날짜+룸 */}
-              <div style={{minWidth:62,flexShrink:0}}>
-                <div style={{fontSize:15,fontWeight:800,letterSpacing:'-.3px',lineHeight:1.05}}>{fmtBig(g.date)}</div>
-                <div style={{fontSize:12,fontWeight:700,color:g.merged?'var(--sak-t)':'var(--san-t)',marginTop:1,whiteSpace:'nowrap'}}>{g.room}</div>
+            <div key={i} style={{display:'flex',alignItems:'center',gap:9,border:'1px solid var(--bd)',borderLeft:`4px solid ${g.merged?'var(--sak)':'var(--san)'}`,borderRadius:12,padding:'11px 11px',background:'var(--sf)',boxShadow:'var(--sh)'}}>
+              {/* 날짜+룸(세로) */}
+              <div style={{minWidth:50,flexShrink:0}}>
+                <div style={{fontSize:12,color:'var(--tx3)',fontWeight:700}}>{fmtYr(g.date)}</div>
+                <div style={{fontSize:17,fontWeight:900,letterSpacing:'-.5px',lineHeight:1.1}}>{fmtMD2(g.date)}</div>
+                <div style={{marginTop:3,display:'flex',flexDirection:'column',gap:1}}>
+                  {roomList.map(r=><span key={r} style={{fontSize:13,fontWeight:800,color:g.merged?'var(--sak-t)':'var(--san-t)',lineHeight:1.2}}>{r}</span>)}
+                </div>
               </div>
-              {/* 수치 */}
-              <div style={{flex:1,display:'flex',justifyContent:'space-around',gap:4,fontSize:13}}>
-                <div style={{textAlign:'center'}}><div style={{fontSize:10,color:'var(--tx3)',fontWeight:600}}>세팅</div><div style={{fontWeight:800}}>{g.san.toLocaleString()}</div></div>
-                <div style={{textAlign:'center'}}><div style={{fontSize:10,color:'var(--tx3)',fontWeight:600}}>1차</div><div style={{fontWeight:700,color:s1>0?'var(--sel-t)':'var(--tx3)'}}>{s1>0?s1.toLocaleString():'—'}</div></div>
-                <div style={{textAlign:'center'}}><div style={{fontSize:10,color:'var(--tx3)',fontWeight:600}}>2차</div><div style={{fontWeight:700,color:s2>0?'var(--sel-t)':'var(--tx3)'}}>{s2>0?s2.toLocaleString():'—'}</div></div>
-                <div style={{textAlign:'center'}}><div style={{fontSize:10,color:'var(--tx3)',fontWeight:600}}>폐기</div><div style={{fontWeight:700,color:peg>0?'var(--peg-t)':'var(--tx3)'}}>{peg>0?peg.toLocaleString():'—'}</div></div>
+              {/* 수치 (왼쪽 정렬, 고정 크기) */}
+              <div style={{flex:1,display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:4,minWidth:0}}>
+                {[['세팅',g.san,'var(--san-t)'],['1차',s1,'var(--sel-t)'],['2차',s2,'var(--sel-t)'],['폐기',peg,'var(--peg-t)']].map(([lbl,val,col],j)=>{
+                  const txt=val>0?val.toLocaleString():'—';
+                  return(
+                    <div key={j} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',minWidth:0}}>
+                      <div style={{fontSize:12.5,color:'var(--tx2)',fontWeight:700,lineHeight:1.4,height:18}}>{lbl}</div>
+                      <div style={{fontSize:14,fontWeight:800,color:val>0?col:'var(--tx3)',letterSpacing:'-.5px',whiteSpace:'nowrap',lineHeight:1.2}}>{txt}</div>
+                    </div>
+                  );
+                })}
               </div>
               {/* 선별율 배지 */}
-              <div style={{flexShrink:0,fontSize:17,fontWeight:900,color:srCol,background:srBg,borderRadius:8,padding:'7px 9px',minWidth:54,textAlign:'center',letterSpacing:'-.5px'}}>{srTxt}</div>
+              <div style={{flexShrink:0,fontSize:13,fontWeight:900,color:srCol,background:srBg,borderRadius:8,padding:'6px 6px',minWidth:44,textAlign:'center',letterSpacing:'-.5px',lineHeight:1.1}}>{srTxt}</div>
             </div>
           );
         })}
@@ -865,7 +876,7 @@ function App(){
   const totalSanCap=useMemo(()=>SAN_RO.reduce((s,r)=>s+sanSt[r].cap,0),[sanSt]);
   const totalSanOcc=useMemo(()=>SAN_RO.reduce((s,r)=>s+sanSt[r].occ,0),[sanSt]);
 
-  const cutoff3m=useMemo(()=>addDays(today(),-90),[]);
+  const cutoff3m=useMemo(()=>addDays(today(),-182),[]);
   const years=useMemo(()=>[...new Set(entries.map(e=>e.date.slice(0,4)))].sort().reverse(),[entries]);
 
   const recentEntries=useMemo(()=>entries.filter(e=>e.date>=cutoff3m),[entries,cutoff3m]);
@@ -892,7 +903,10 @@ function App(){
     return arr;
   },[entries]);
   const maxStat=useMemo(()=>Math.max(...monthlyStats.map(m=>Math.max(m.산란||0,m.선별||0)),1),[monthlyStats]);
-  const shownMonths=useMemo(()=>monthlyStats.filter(m=>yr==='전체'||m.month.slice(0,4)===yr),[monthlyStats,yr]);
+  const shownMonths=useMemo(()=>{
+    const f=monthlyStats.filter(m=>yr==='전체'||m.month.slice(0,4)===yr);
+    return yr==='전체'?f.slice(-12):f;  // 전체 선택 시 최근 12개월만
+  },[monthlyStats,yr]);
   const shownMax=useMemo(()=>Math.max(...shownMonths.map(m=>Math.max(m.산란||0,m.선별||0)),1),[shownMonths]);
 
   const selSchedule=useMemo(()=>{
@@ -1107,7 +1121,7 @@ function App(){
           </button>
 
           <div style={{background:'var(--sf)',border:'1px solid var(--bd)',borderRadius:'var(--r)',padding:'16px',marginBottom:12,boxShadow:'var(--sh)'}}>
-            <div style={{fontSize:14,fontWeight:700,color:'var(--tx2)',marginBottom:12}}>📊 최근 3개월 실적</div>
+            <div style={{fontSize:14,fontWeight:700,color:'var(--tx2)',marginBottom:12}}>📊 최근 6개월 실적</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
               <div style={{textAlign:'center',padding:'12px 8px',background:'var(--san-h)',borderRadius:10}}>
                 <div style={{fontSize:13,color:'var(--san-t)',fontWeight:700,marginBottom:5}}>총 산란</div>
@@ -1135,7 +1149,7 @@ function App(){
 
           {shownMonths.length>0&&(
             <div className="card" style={{marginBottom:10}}>
-              <div className="card-hdr">월별 산란 현황 ({yr==='전체'?'전체':yr+'년'})</div>
+              <div className="card-hdr">월별 산란 현황 ({yr==='전체'?'최근 1년':yr+'년'})</div>
               <div className="leg">
                 <div className="leg-i"><div className="leg-b" style={{background:'var(--san)'}}/>산란세팅</div>
                 <div className="leg-i"><div className="leg-b" style={{background:'var(--sel)'}}/>사육세팅</div>
@@ -1147,7 +1161,9 @@ function App(){
                     <div className="chart-bars">
                       {[['산란','var(--san)'],['선별','var(--sel)']].map(([t,c])=>(
                         <div key={t} className="chart-bar" title={`${m.month} ${t}: ${fmt(m[t]||0)}`}
-                          style={{height:Math.round((m[t]||0)/shownMax*94)+3+'px',background:c}}/>
+                          style={{height:Math.round((m[t]||0)/shownMax*114)+3+'px',background:c,position:'relative'}}>
+                          {t==='산란'&&m.산란>0&&<span style={{position:'absolute',bottom:3,left:'50%',transform:'translateX(-50%)',writingMode:'vertical-rl',fontSize:9,fontWeight:800,color:'#fff',letterSpacing:'-.5px',textShadow:'0 1px 2px rgba(0,0,0,.25)'}}>{fmt(m.산란)}</span>}
+                        </div>
                       ))}
                     </div>
                     <div className="chart-x">{m.month.slice(5)}</div>
@@ -1183,7 +1199,7 @@ function App(){
             <div className="cn">{filtEntries.length}건 표시 (전체 {entries.length}건)</div>
             {filtEntries.map(e=>(
               <div key={e.id} className="hi">
-                <span className="hi-dt">{e.date.slice(5)}</span>
+                <span className="hi-dt"><span className="hi-yr">{e.date.slice(0,4)}</span><span className="hi-md">{e.date.slice(5).replace('-','/')}</span></span>
                 <span className="hi-rm">{e.room}</span>
                 <span className={`hi-b ${typeBadge(e.type)}`}>{typeLabel(e.type)}</span>
                 <span className="hi-a">{fmt(e.amount)}</span>
