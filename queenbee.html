@@ -1595,13 +1595,15 @@ function renderPlan(mode){
         badge=`<span class="badge ${cDiff>=0?'bg-g':'bg-r'}">${cDiff>=0?'✅':'⚠️'} ${comma(colAct)}</span>`;
       }
       // 왼쪽=채집, 오른쪽=월동입고 (2단)
-      const cColor=cDiff>=0?'#0a7a5a':'var(--R)';
-      const wColor=wDiff>=0?'#0a7a5a':'var(--R)';
+      // 달성률 3단계: 100%이상 녹색, 90%이상 주황, 90%미만 빨강
+      const pctColor=(pct)=>pct>=100?'#0a7a5a':(pct>=90?'#e8890c':'var(--R)');
+      const cColor=pctColor(cPct);
+      const wColor=pctColor(wPct);
       // 진행바 채움색: 어두운 카드면 밝은 녹색, 아니면 기존 색
-      const cFillC=_isPendingDark?(cDiff>=0?'#7fe3b8':'#ff9b9b'):cColor;
-      const wFillC=_isPendingDark?(wDiff>=0?'#7fe3b8':'#ff9b9b'):wColor;
-      const cPctC=_isPendingDark?(cDiff>=0?'#9ff0c8':'#ffb3b3'):cColor;
-      const wPctC=_isPendingDark?(wDiff>=0?'#9ff0c8':'#ffb3b3'):wColor;
+      const cFillC=_isPendingDark?(cPct>=100?'#7fe3b8':(cPct>=90?'#ffc97a':'#ff9b9b')):cColor;
+      const wFillC=_isPendingDark?(wPct>=100?'#7fe3b8':(wPct>=90?'#ffc97a':'#ff9b9b')):wColor;
+      const cPctC=_isPendingDark?(cPct>=100?'#9ff0c8':(cPct>=90?'#ffd9a0':'#ffb3b3')):cColor;
+      const wPctC=_isPendingDark?(wPct>=100?'#9ff0c8':(wPct>=90?'#ffd9a0':'#ffb3b3')):wColor;
       progHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
         <div>
           <div style="background:${barTrackC};border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${cBar}%;background:${cFillC};border-radius:5px;"></div></div>
@@ -1740,6 +1742,13 @@ function renderPlantResult(){
     const relPct=relAct>0?Math.round(relAct/s.wintering_target*100):0;
     const plPct=plAct>0?Math.round(plAct/s.planting_qty*100):0;
     const relBar=Math.min(relPct,100), plBar=Math.min(plPct,100);
+    // 달성률 100% 이상=녹색, 미만=빨강 (채집/월동과 동일)
+    // 달성률 3단계: 100%이상 녹색, 90%이상 주황, 90%미만 빨강
+    const _pc=(p)=>p>=100?'#0a7a5a':(p>=90?'#e8890c':'var(--R)');
+    const relFillC=relAct>0?_pc(relPct):'#ccc';
+    const plFillC=plAct>0?_pc(plPct):'#ccc';
+    const relPctC=relAct>0?_pc(relPct):'var(--muted)';
+    const plPctC=plAct>0?_pc(plPct):'var(--muted)';
     // 채집/월동 실적 카드와 동일한 색 체계
     const cardBg='#faf6ef', cardBorder='1.5px solid #e5ddd0';
     const boxBg='#eaf0f8', boxBg2='#f1f7e8';  // 해제=블루톤, 산란=그린톤
@@ -1767,12 +1776,12 @@ function renderPlantResult(){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
         <div>
-          <div style="background:#e8eef2;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${relBar}%;background:#1a5fa0;border-radius:5px;"></div></div>
-          <div style="font-size:13px;font-weight:800;color:#1a3a5d;display:flex;justify-content:space-between;"><span>해제 ${comma(relAct)}/${comma(s.wintering_target)}</span><span>${relAct>0?relPct+'%':'-'}</span></div>
+          <div style="background:#e8eef2;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${relBar}%;background:${relFillC};border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:${relPctC};display:flex;justify-content:space-between;"><span>해제 ${comma(relAct)}/${comma(s.wintering_target)}</span><span>${relAct>0?relPct+'%':'-'}</span></div>
         </div>
         <div>
-          <div style="background:#eef4e2;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${plBar}%;background:#5a9e1a;border-radius:5px;"></div></div>
-          <div style="font-size:13px;font-weight:800;color:#3a5a1a;display:flex;justify-content:space-between;"><span>산란 ${comma(plAct)}/${comma(s.planting_qty)}</span><span>${plAct>0?plPct+'%':'-'}</span></div>
+          <div style="background:#eef4e2;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${plBar}%;background:${plFillC};border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:${plPctC};display:flex;justify-content:space-between;"><span>산란 ${comma(plAct)}/${comma(s.planting_qty)}</span><span>${plAct>0?plPct+'%':'-'}</span></div>
         </div>
       </div>
       <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:6px;">
