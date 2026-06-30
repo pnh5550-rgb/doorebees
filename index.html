@@ -959,6 +959,7 @@ function App(){
     setEditEntry(null);showToast('수정됨');
   }
   function doExport(){
+    if(!isAdmin){showToast('🔒 관리자 로그인 후 내보낼 수 있습니다');return;}
     if(!window.ExcelJS){showToast('ExcelJS 로딩 중... 잠시 후 다시 시도해주세요');return;}
     setExporting(true);
     showToast('⏳ 엑셀 생성 중...');
@@ -1139,14 +1140,23 @@ function App(){
 
         {/* ── 통계 ── */}
         {tab==='stat'&&(<>
-          <button className="exp-btn" onClick={doExport}>
-            <i className="ti ti-file-spreadsheet" style={{fontSize:22,color:'#16A34A'}}/>
-            <div style={{flex:1,textAlign:'left'}}>
-              <div style={{fontWeight:800,fontSize:16}}>엑셀 내보내기</div>
-              <div style={{fontSize:13,color:'var(--tx2)'}}>현황·배치선별율·전체이력·월별통계 (4개 시트)</div>
+          {isAdmin
+            ?<button className="exp-btn" onClick={doExport}>
+              <i className="ti ti-file-spreadsheet" style={{fontSize:22,color:'#16A34A'}}/>
+              <div style={{flex:1,textAlign:'left'}}>
+                <div style={{fontWeight:800,fontSize:16}}>엑셀 내보내기</div>
+                <div style={{fontSize:13,color:'var(--tx2)'}}>현황·배치선별율·전체이력·월별통계 (4개 시트)</div>
+              </div>
+              <i className="ti ti-download" style={{fontSize:20,color:'var(--tx2)'}}/>
+            </button>
+            :<div className="exp-btn" style={{cursor:'default',borderColor:'var(--bd2)',opacity:.7}}>
+              <i className="ti ti-lock" style={{fontSize:22,color:'var(--tx3)'}}/>
+              <div style={{flex:1,textAlign:'left'}}>
+                <div style={{fontWeight:800,fontSize:16,color:'var(--tx2)'}}>엑셀 내보내기</div>
+                <div style={{fontSize:13,color:'var(--tx3)'}}>관리자 로그인 후 사용 가능</div>
+              </div>
             </div>
-            <i className="ti ti-download" style={{fontSize:20,color:'var(--tx2)'}}/>
-          </button>
+          }
 
           {years.length>1&&(
             <div className="fbar" style={{marginBottom:10}}>
