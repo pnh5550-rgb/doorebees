@@ -379,6 +379,7 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .dd-done{color:var(--rd-t)!important;font-weight:800!important;}
 .si-ib{display:flex;align-items:center;justify-content:center;gap:5px;padding:9px;width:100%;background:linear-gradient(135deg,#8B5CF6,var(--sak));border:none;border-radius:var(--rs);cursor:pointer;font-size:14px;color:#fff;margin-top:10px;font-family:inherit;font-weight:700;box-shadow:0 3px 12px rgba(124,58,237,.28);transition:transform .12s}
 .si-ib:active{transform:scale(.98)}
+.si-qty{font-size:12px;font-weight:800;margin-top:3px;letter-spacing:-.2px}
 .past-t{text-align:center;padding:8px;font-size:14px;color:var(--tx2);cursor:pointer;border:1.5px dashed var(--bd2);border-radius:var(--rs);margin-top:5px;background:transparent;font-family:inherit;width:100%}
 .tab-inner{display:flex;gap:6px;margin-bottom:12px}
 .ti-btn{flex:1;padding:9px 6px;border:1.5px solid var(--bd2);background:var(--sf);border-radius:var(--rs);cursor:pointer;font-size:14px;font-weight:600;color:var(--tx2);text-align:center;font-family:inherit}
@@ -620,7 +621,7 @@ function SanCard({room,st,big}){
   const pct=st.rate;
   const c=pct<50?'ok':pct<75?'go':pct<90?'wn':'dg';
   return(
-    <div className={`rc san-rc${big?' rc-big':''}${room.startsWith('나')?' rc-na':''}`}>
+    <div className={`rc san-rc${big?' rc-big':''}`}>
       <div className="rc-top">
         <span className="rc-name">{room}</span>
         <span className={`badge b-${c}`}>세팅 {pct}%</span>
@@ -915,17 +916,25 @@ function App(){
     const td=today();
     // computeBatches(단일 진실원천)를 그대로 사용 → 일정·이력·엑셀 완전 일치
     return window.computeBatches(entries)
-      .filter(b=>b.date>=addDays(td,-60))  // 세팅일 기준 최근 60일만 표시
+      .filter(b=>yr==='전체'||b.date.slice(0,4)===yr)
       .map(b=>{
         const {s1,s2}=weekTueFri(b.date);
-        const sel1Done=b.s1>0;          // computeBatches가 귀속한 1차 선별량
-        const sel2Done=b.s2>0;          // 2차 선별량
-        const done1=sel1Done||s1<td;    // 1차: 실제 선별 기록 있거나 예정일 지남
-        const done2=sel2Done||s2<td;    // 2차: 실제 선별 기록 있거나 예정일 지남
+        const sel1Done=b.s1>0;
+        const sel2Done=b.s2>0;
+        const done1=sel1Done||s1<td;
+        const done2=sel2Done||s2<td;
         const done=done1&&done2;
-        return{date:b.date,room:b.room,amount:b.san,s1,s2,sel1Done,sel2Done,done1,done2,done};
+        // 폐기를 1차/2차 날짜 중 가까운 쪽으로 배분
+        let p1=0,p2=0;
+        (b.pegs||[]).forEach(pg=>{
+          const d1=Math.abs((new Date(pg.date)-new Date(s1))/86400000);
+          const d2=Math.abs((new Date(pg.date)-new Date(s2))/86400000);
+          if(d1<=d2)p1+=pg.amount;else p2+=pg.amount;
+        });
+        return{date:b.date,room:b.room,amount:b.san,s1,s2,sel1Done,sel2Done,done1,done2,done,
+               q1:b.s1,q2:b.s2,p1,p2,pegQty:b.peg,rate:b.rate};
       });
-  },[entries]);
+  },[entries,yr]);
 
   async function submitEntry(){
     if(!isAdmin){showToast('관리자 로그인 후 입력 가능');return;}
@@ -1086,24 +1095,41 @@ function App(){
 
         {/* ── 일정 ── */}
         {tab==='sched'&&(<>
-          {selSchedule.length===0
+          {years.length>1&&(
+            <div className="fbar" style={{marginBottom:10}}>
+              <span style={{padding:'0 6px 0 2px',color:'var(--tx3)',fontSize:13,fontWeight:700}}>연도</span>
+              {['전체',...years].map(y=><button key={y} className={`fbtn${yr===y?' on':''}`} onClick={()=>setYr(y)}>{y==='전체'?'전체':y+'년'}</button>)}
+            </div>
+          )}          {selSchedule.length===0
             ?<div className="empty"><i className="ti ti-calendar-off"/>예정된 일정 없음</div>
             :selSchedule.map((s,i)=>{
               const d1=dday(s.s1),d2=dday(s.s2);
               return(
                 <div key={i} className={`si${s.done?' si-done':''}`}>
                   <div className="si-h">
-                    <div><div className="si-n">{s.room}</div><div className="si-m">산란 {fmtDate(s.date)} · {fmt(s.amount)}</div></div>
+                    <div><div className="si-n">{s.room}</div><div className="si-m">산란세팅 {fmtDate(s.date)} · {fmt(s.amount)}</div></div>
                     {(()=>{
                       if(s.done)return <span className="badge b-dg">완료</span>;
-                      const dd1=s.done1?d2:d1;  // 표시할 D-day (1차 끝났으면 2차)
+                      const dd1=s.done1?d2:d1;
                       const bcls=dd1.cls==='dd-td'?'dg':dd1.cls==='dd-nr'?'tg':dd1.cls==='dd-sn'?'wn':'ok';
                       return <span className={`badge b-${bcls}`}>{dd1.txt}</span>;
                     })()}
                   </div>
                   <div className="si-dates">
-                    <div className={`si-db${s.done1?' si-cell-done':''}`}><div className="si-dl">① 1차 선별 (화)</div><div className="si-dv">{fmtDate(s.s1)}</div><div className={`si-dd ${s.done1?'dd-done':d1.cls}`}>{s.done1?'✓ 완료':d1.txt}</div></div>
-                    <div className={`si-db${s.done2?' si-cell-done':''}`}><div className="si-dl">② 2차 선별 (금)</div><div className="si-dv">{fmtDate(s.s2)}</div><div className={`si-dd ${s.done2?'dd-done':d2.cls}`}>{s.done2?'✓ 완료':d2.txt}</div></div>
+                    <div className={`si-db${s.done1?' si-cell-done':''}`}>
+                      <div className="si-dl">① 1차 선별 (화)</div>
+                      <div className="si-dv">{fmtDate(s.s1)}</div>
+                      {s.done1
+                        ?<div className="si-qty">{s.q1>0&&<span style={{color:'var(--sel-t)'}}>선별 {fmt(s.q1)}</span>}{s.q1>0&&s.p1>0&&<span style={{color:'var(--tx3)'}}> · </span>}{s.p1>0&&<span style={{color:'var(--rd-t)'}}>폐기 {fmt(s.p1)}</span>}{s.q1===0&&s.p1===0&&<span style={{color:'var(--tx3)'}}>—</span>}</div>
+                        :<div className={`si-dd ${d1.cls}`}>{d1.txt}</div>}
+                    </div>
+                    <div className={`si-db${s.done2?' si-cell-done':''}`}>
+                      <div className="si-dl">② 2차 선별 (금)</div>
+                      <div className="si-dv">{fmtDate(s.s2)}</div>
+                      {s.done2
+                        ?<div className="si-qty">{s.q2>0&&<span style={{color:'var(--sel-t)'}}>선별 {fmt(s.q2)}</span>}{s.q2>0&&s.p2>0&&<span style={{color:'var(--tx3)'}}> · </span>}{s.p2>0&&<span style={{color:'var(--rd-t)'}}>폐기 {fmt(s.p2)}</span>}{s.q2===0&&s.p2===0&&<span style={{color:'var(--tx3)'}}>—</span>}</div>
+                        :<div className={`si-dd ${d2.cls}`}>{d2.txt}</div>}
+                    </div>
                   </div>
                   {!s.done&&isAdmin&&<button className="si-ib" onClick={()=>{setForm({date:s.s1,room:s.room,type:'사육',amount:''});setTab('input');localStorage.setItem('db_tab','input');}}><i className="ti ti-plus" style={{fontSize:16}}/>선별 입력하기</button>}
                 </div>
