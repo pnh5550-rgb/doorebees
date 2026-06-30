@@ -669,7 +669,7 @@ textarea{resize:none;height:68px;font-size:14px;}
     <div style="font-size:13px;color:var(--muted);margin-bottom:13px;">기록된 모든 데이터를 JSON 파일로 백업하거나 복원합니다.</div>
     <div class="btn-row" style="margin-bottom:10px;">
       <button class="btn btn-g" onclick="backupJSON()">📤 JSON 백업</button>
-      <button class="btn btn-b" onclick="document.getElementById('restoreFile').click()">📥 JSON 복원</button>
+      <button class="btn btn-b" onclick="if(requireAdmin())document.getElementById('restoreFile').click()">📥 JSON 복원</button>
     </div>
     <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="restoreJSON(this)">
     <div class="btn-row" style="margin-bottom:10px;">
