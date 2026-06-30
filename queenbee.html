@@ -1591,7 +1591,7 @@ function renderPlan(mode){
       const wTextC=_isPendingDark?'#ffffff':'#1a3a5d';
       const barTrackC=_isPendingDark?'rgba(255,255,255,.25)':'#e8ede9';
       const barTrackC2=_isPendingDark?'rgba(255,255,255,.25)':'#e8eef2';
-      if(colAct>0){
+      if(colAct>0 && !isPastMode){
         badge=`<span class="badge ${cDiff>=0?'bg-g':'bg-r'}">${cDiff>=0?'✅':'⚠️'} ${comma(colAct)}</span>`;
       }
       // 왼쪽=채집, 오른쪽=월동입고 (2단)
