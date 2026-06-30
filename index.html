@@ -882,12 +882,13 @@ function App(){
   const statSummary=useMemo(()=>{
     const batches=window.computeBatches(entries).filter(b=>yr==='전체'||b.date.slice(0,4)===yr);
     const san=batches.reduce((s,b)=>s+b.san,0);
+    const sel=batches.reduce((s,b)=>s+b.sel,0);
     const peg=batches.reduce((s,b)=>s+b.peg,0);
     // 사육선별율 = 선별이 발생한 배치들의 선별율 평균
     const rated=batches.filter(b=>b.rate!==null);
     const selRate=rated.length?Math.round(rated.reduce((s,b)=>s+b.rate,0)/rated.length):0;
     const pegR=san>0?Math.round(peg/san*100):0;
-    return{san,peg,selRate,ratedCnt:rated.length,pegR};
+    return{san,sel,peg,selRate,ratedCnt:rated.length,pegR};
   },[entries,yr]);
 
   const monthlyStats=useMemo(()=>{
@@ -1136,9 +1137,9 @@ function App(){
                 <div style={{fontSize:22,fontWeight:900,color:'var(--san-t)'}}>{fmt(statSummary.san)}</div>
               </div>
               <div style={{textAlign:'center',padding:'12px 8px',background:'var(--sel-bg)',borderRadius:10}}>
-                <div style={{fontSize:13,color:'var(--sel-t)',fontWeight:700,marginBottom:5}}>사육선별율</div>
-                <div style={{fontSize:26,fontWeight:900,color:'var(--sel-t)',lineHeight:1.1}}>{statSummary.selRate}%</div>
-                <div style={{fontSize:11,color:'var(--sel-t)',fontWeight:600,marginTop:2}}>{statSummary.ratedCnt}개 평균</div>
+                <div style={{fontSize:13,color:'var(--sel-t)',fontWeight:700,marginBottom:5}}>사육선별</div>
+                <div style={{fontSize:22,fontWeight:900,color:'var(--sel-t)'}}>{fmt(statSummary.sel)}</div>
+                <div style={{fontSize:14,color:'var(--sel-t)',fontWeight:700}}>{statSummary.selRate}%</div>
               </div>
               <div style={{textAlign:'center',padding:'12px 8px',background:'var(--peg-bg)',borderRadius:10}}>
                 <div style={{fontSize:13,color:'var(--peg-t)',fontWeight:700,marginBottom:5}}>폐기</div>
