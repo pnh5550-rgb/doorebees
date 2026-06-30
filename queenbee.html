@@ -1528,6 +1528,7 @@ function deleteEvent(eid){
 }
 
 function exportCSV(){
+  if(!requireAdmin()) return;  // 로그아웃 상태에선 차단
   const lines=['\uFEFF타입,날짜,수량,배치채집일,비고'];
   const b=DB.batches;
   DB.events.sort((a,c)=>b.date>c.date?-1:1).forEach(e=>{
@@ -2170,6 +2171,7 @@ function restoreJSON(input){
    엑셀 내보내기
 ═══════════════════════════════════ */
 function exportXLSX(){
+  if(!requireAdmin()) return;  // 로그아웃 상태에선 내보내기 차단
   if(typeof XLSX !== 'undefined' && XLSX.utils){
     doXLSX();
   } else {
