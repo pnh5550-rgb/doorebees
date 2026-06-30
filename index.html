@@ -876,18 +876,18 @@ function App(){
   const totalSanCap=useMemo(()=>SAN_RO.reduce((s,r)=>s+sanSt[r].cap,0),[sanSt]);
   const totalSanOcc=useMemo(()=>SAN_RO.reduce((s,r)=>s+sanSt[r].occ,0),[sanSt]);
 
-  const cutoff3m=useMemo(()=>addDays(today(),-182),[]);
   const years=useMemo(()=>[...new Set(entries.map(e=>e.date.slice(0,4)))].sort().reverse(),[entries]);
 
-  const recentEntries=useMemo(()=>entries.filter(e=>e.date>=cutoff3m),[entries,cutoff3m]);
-  const stat3m=useMemo(()=>{
-    const san=recentEntries.filter(e=>normType(e.type)==='산란').reduce((s,e)=>s+e.amount,0);
-    const sel=recentEntries.filter(e=>normType(e.type)==='선별').reduce((s,e)=>s+e.amount,0);
-    const peg=recentEntries.filter(e=>normType(e.type)==='산란폐기').reduce((s,e)=>s+e.amount,0);
+  // 상단 실적: 연도 필터(yr) 반응 — 전체=전 기간, 연도=해당 연도
+  const statSummary=useMemo(()=>{
+    const src=yr==='전체'?entries:entries.filter(e=>e.date.slice(0,4)===yr);
+    const san=src.filter(e=>normType(e.type)==='산란').reduce((s,e)=>s+e.amount,0);
+    const sel=src.filter(e=>normType(e.type)==='선별').reduce((s,e)=>s+e.amount,0);
+    const peg=src.filter(e=>normType(e.type)==='산란폐기').reduce((s,e)=>s+e.amount,0);
     const selR=san>0?Math.round(sel/san*100):0;
     const pegR=san>0?Math.round(peg/san*100):0;
     return{san,sel,peg,selR,pegR};
-  },[recentEntries]);
+  },[entries,yr]);
 
   const monthlyStats=useMemo(()=>{
     const m={};
@@ -1120,32 +1120,33 @@ function App(){
             <i className="ti ti-download" style={{fontSize:20,color:'var(--tx2)'}}/>
           </button>
 
-          <div style={{background:'var(--sf)',border:'1px solid var(--bd)',borderRadius:'var(--r)',padding:'16px',marginBottom:12,boxShadow:'var(--sh)'}}>
-            <div style={{fontSize:14,fontWeight:700,color:'var(--tx2)',marginBottom:12}}>📊 최근 6개월 실적</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
-              <div style={{textAlign:'center',padding:'12px 8px',background:'var(--san-h)',borderRadius:10}}>
-                <div style={{fontSize:13,color:'var(--san-t)',fontWeight:700,marginBottom:5}}>총 산란</div>
-                <div style={{fontSize:22,fontWeight:900,color:'var(--san-t)'}}>{fmt(stat3m.san)}</div>
-              </div>
-              <div style={{textAlign:'center',padding:'12px 8px',background:'var(--sel-bg)',borderRadius:10}}>
-                <div style={{fontSize:13,color:'var(--sel-t)',fontWeight:700,marginBottom:5}}>총 선별</div>
-                <div style={{fontSize:22,fontWeight:900,color:'var(--sel-t)'}}>{fmt(stat3m.sel)}</div>
-                <div style={{fontSize:14,color:'var(--sel-t)',fontWeight:700}}>{stat3m.selR}%</div>
-              </div>
-              <div style={{textAlign:'center',padding:'12px 8px',background:'var(--peg-bg)',borderRadius:10}}>
-                <div style={{fontSize:13,color:'var(--peg-t)',fontWeight:700,marginBottom:5}}>총 폐기</div>
-                <div style={{fontSize:22,fontWeight:900,color:'var(--peg-t)'}}>{fmt(stat3m.peg)}</div>
-                <div style={{fontSize:14,color:'var(--peg-t)',fontWeight:700}}>{stat3m.pegR}%</div>
-              </div>
-            </div>
-          </div>
-
           {years.length>1&&(
             <div className="fbar" style={{marginBottom:10}}>
               <span style={{padding:'0 6px 0 2px',color:'var(--tx3)',fontSize:13,fontWeight:700}}>연도</span>
               {['전체',...years].map(y=><button key={y} className={`fbtn${yr===y?' on':''}`} onClick={()=>setYr(y)}>{y==='전체'?'전체':y+'년'}</button>)}
             </div>
           )}
+
+          <div style={{background:'var(--sf)',border:'1px solid var(--bd)',borderRadius:'var(--r)',padding:'16px',marginBottom:12,boxShadow:'var(--sh)'}}>
+            <div style={{fontSize:14,fontWeight:700,color:'var(--tx2)',marginBottom:12}}>📊 {yr==='전체'?'전체 실적':yr+'년 실적'}</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+              <div style={{textAlign:'center',padding:'12px 8px',background:'var(--san-h)',borderRadius:10}}>
+                <div style={{fontSize:13,color:'var(--san-t)',fontWeight:700,marginBottom:5}}>산란세팅</div>
+                <div style={{fontSize:22,fontWeight:900,color:'var(--san-t)'}}>{fmt(statSummary.san)}</div>
+                <div style={{fontSize:14,color:'var(--san-t)',fontWeight:700,visibility:'hidden'}}>100%</div>
+              </div>
+              <div style={{textAlign:'center',padding:'12px 8px',background:'var(--sel-bg)',borderRadius:10}}>
+                <div style={{fontSize:13,color:'var(--sel-t)',fontWeight:700,marginBottom:5}}>사육세팅</div>
+                <div style={{fontSize:22,fontWeight:900,color:'var(--sel-t)'}}>{fmt(statSummary.sel)}</div>
+                <div style={{fontSize:14,color:'var(--sel-t)',fontWeight:700}}>{statSummary.selR}%</div>
+              </div>
+              <div style={{textAlign:'center',padding:'12px 8px',background:'var(--peg-bg)',borderRadius:10}}>
+                <div style={{fontSize:13,color:'var(--peg-t)',fontWeight:700,marginBottom:5}}>폐기</div>
+                <div style={{fontSize:22,fontWeight:900,color:'var(--peg-t)'}}>{fmt(statSummary.peg)}</div>
+                <div style={{fontSize:14,color:'var(--peg-t)',fontWeight:700}}>{statSummary.pegR}%</div>
+              </div>
+            </div>
+          </div>
 
           {shownMonths.length>0&&(
             <div className="card" style={{marginBottom:10}}>
