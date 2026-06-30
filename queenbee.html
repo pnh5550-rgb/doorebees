@@ -478,6 +478,7 @@ textarea{resize:none;height:68px;font-size:14px;}
 <div class="pg" id="pg-stock">
   <div class="sg" id="stockStat"></div>
   <div class="sec">배치별 월동 현황 (최신순)</div>
+  <div class="filter-row" id="stockYearFilter"></div>
   <div id="batchList"></div>
   <div class="sec">전체 기록</div>
   <div class="card">
@@ -1392,6 +1393,9 @@ function setRecFilter(f){
   renderRecList();
 }
 
+let _stockYear='all';
+function setStockYear(y){ _stockYear=y; renderStock(); }
+
 function renderStock(){
   const stock=totalStock();
   const oyS=new Date(); oyS.setFullYear(oyS.getFullYear()-1); const oyStr2=oyS.toISOString().slice(0,10);
@@ -1406,9 +1410,16 @@ function renderStock(){
 
   // 배치별 현황 (최신순) — 월동입고 이력이 있는 배치만 표시 (채집만 한 배치는 제외)
   const winBatchIds=new Set(DB.events.filter(e=>e.type==='col').map(e=>e.batch_id));
-  const sorted=[...DB.batches]
+  let sorted=[...DB.batches]
     .filter(b=>winBatchIds.has(b.id) || (b.wintered||0)>0)
     .sort((a,b)=>b.col_date.localeCompare(a.col_date));
+  // 연도 필터 (월동입고일=col_date 기준, 오래된 연도는 오른쪽)
+  const _syYears=[...new Set(sorted.map(b=>b.col_date.slice(0,4)))].sort().reverse();
+  const _syAll=['all',..._syYears];
+  const _syLabels=['전체',..._syYears];
+  if(!_stockYear) _stockYear='all';
+  document.getElementById('stockYearFilter').innerHTML=_syAll.map((y,i)=>`<button class="fbtn${_stockYear===y?' on':''}" onclick="setStockYear('${y}')">${_syLabels[i]}</button>`).join('');
+  if(_stockYear!=='all') sorted=sorted.filter(b=>b.col_date.startsWith(_stockYear));
   let bhtml='';
   if(!sorted.length){ bhtml='<div class="empty">배치 없음 · 월동 입고를 먼저 기록하세요</div>'; }
   else {
@@ -1551,7 +1562,9 @@ function renderPlan(mode){
     : SCHED.filter(s=>s.collection_thu>=_td2);
   // 연도 필터는 이 탭에 실제 데이터가 있는 연도만 표시
   const ySet2=new Set(modeData.map(s=>s.collection_thu.slice(0,4)));
+  // 실적=최근 먼저(내림차순), 계획표=가까운 미래 먼저(오름차순)
   const years=[...ySet2].sort();
+  if(isPastMode) years.reverse();
   const allYears=['all',...years];
   const allLabels=['전체',...years];
   const setFn = isPastMode?'setResultFilter':'setPlanFilter';
@@ -1723,7 +1736,7 @@ function renderPlantResult(){
   _resultFilter=curFilter;
   const modeData=SCHED.filter(s=>hasPlantRecord(s));  // 산란 기록 있는 것만 (완료)
   const ySet=new Set(modeData.map(s=>s.planting_mon.slice(0,4)));
-  const years=[...ySet].sort();
+  const years=[...ySet].sort().reverse();  // 최근 먼저
   const allYears=['all',...years];
   const allLabels=['전체',...years];
   document.getElementById('resultFilter').innerHTML=allYears.map((y,i)=>`
@@ -1932,13 +1945,15 @@ function renderEditList(){
   const typeColor={collect:'#0a5f6e',col:'var(--G)',col2:'#0a5f6e',rel:'#1e7e34',plant:'#0a7a5a',death:'var(--R)'};
   // 연도 필터 UI 렌더
   const years=[...new Set(DB.events.map(e=>e.date.slice(0,4)))].sort((a,b)=>b-a);
-  const yearHtml=years.map(y=>`<button class="fbtn${_editYear===y?' on':''}" onclick="setEditYear('${y}')">${y}년</button>`).join('');
+  // 전체 버튼을 맨 앞에 (오래된 연도는 오른쪽)
+  const yearHtml=`<button class="fbtn${_editYear==='all'?' on':''}" onclick="setEditYear('all')">전체</button>`+
+    years.map(y=>`<button class="fbtn${_editYear===y?' on':''}" onclick="setEditYear('${y}')">${y}년</button>`).join('');
   const yearEl=document.getElementById('editYearFilter');
   if(yearEl) yearEl.innerHTML=yearHtml;
   // 연도 필터 + 타입 필터
   const evts=[...DB.events]
     .filter(e=>{
-      if(!e.date.startsWith(_editYear)) return false;
+      if(_editYear!=='all' && !e.date.startsWith(_editYear)) return false;
       if(_editFilter==='all') return true;
       return e.type===_editFilter;
     })
@@ -2159,7 +2174,7 @@ function exportXLSX(){
     doXLSX();
   } else {
     const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.src='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
     s.onload=doXLSX;
     s.onerror=()=>{ toast('라이브러리 로드 실패. CSV로 대체합니다.'); exportCSV(); };
     document.head.appendChild(s);
@@ -2169,9 +2184,9 @@ function doXLSX(){
   const XS = window.XLSX;
   const wb = XS.utils.book_new();
   const td = today();
-  const won = window.FB_PATH ? '' : '';
+  const now = new Date();
+  const stamp = td + ' ' + String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
 
-  // 공통: 배치별 집계 헬퍼
   function batchStats(b){
     const inQty = DB.events.filter(e=>e.batch_id===b.id&&e.type==='col').reduce((a,e)=>a+e.qty,0) || 0;
     const relA  = DB.events.filter(e=>e.batch_id===b.id&&e.type==='rel').reduce((a,e)=>a+e.qty,0);
@@ -2180,117 +2195,194 @@ function doXLSX(){
     const rem   = batchRemain(b.id);
     return {inQty, relA, plA, deA, rem, collect: b.collect_qty||0};
   }
+  const fmt=(ws,cells,z)=>{ cells.forEach(cell=>{ if(ws[cell]&&typeof ws[cell].v==='number') ws[cell].z=z; }); };
+  // 스타일 헬퍼 (xlsx-js-style)
+  const C={title:'0a5f6e', titleTx:'FFFFFF', head:'d6e8ea', headTx:'0a4750', sec:'eaf3f0', secTx:'1a6e34'};
+  const styTitle={fill:{fgColor:{rgb:C.title}},font:{bold:true,sz:14,color:{rgb:C.titleTx}},alignment:{horizontal:'left',vertical:'center'}};
+  const styStamp={font:{italic:true,sz:9,color:{rgb:'888888'}}};
+  const styHead={fill:{fgColor:{rgb:C.head}},font:{bold:true,sz:11,color:{rgb:C.headTx}},alignment:{horizontal:'center',vertical:'center'},border:{bottom:{style:'thin',color:{rgb:'aaccce'}}}};
+  const stySec={fill:{fgColor:{rgb:C.sec}},font:{bold:true,sz:11,color:{rgb:C.secTx}}};
+  const styTotal={fill:{fgColor:{rgb:'fff3d6'}},font:{bold:true,sz:11,color:{rgb:'8a6d00'}}};
+  // 행 전체에 스타일 적용
+  const styleRow=(ws,r,nCol,sty)=>{ for(let col=0;col<nCol;col++){ const ad=XS.utils.encode_cell({r:r,c:col}); if(!ws[ad]) ws[ad]={v:'',t:'s'}; ws[ad].s=sty; } };
+  const styleCell=(ws,ad,sty)=>{ if(ws[ad]) ws[ad].s=sty; };
+  const colFmt=(ws,cols,r1,r2,z)=>{ for(let r=r1;r<=r2;r++) cols.forEach(col=>{ if(ws[col+r]&&typeof ws[col+r].v==='number') ws[col+r].z=z; }); };
 
   // ════════════════════════════════════
-  // 시트1: 요약 (전체 현황)
+  // 시트1: 종합 요약 보고서
   // ════════════════════════════════════
   const stock = totalStock();
   const oneY = new Date(Date.now()-365*DAY).toISOString().slice(0,10);
-  const sumIn   = DB.events.filter(e=>e.type==='col'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
-  const sumRel  = DB.events.filter(e=>e.type==='rel'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
-  const sumPl   = DB.events.filter(e=>e.type==='plant'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
-  const sumDe   = DB.events.filter(e=>e.type==='death'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
-  const sumCol  = DB.events.filter(e=>e.type==='collect'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
+  const yr = td.slice(0,4);
+  const yStart = yr+'-01-01';
+  // 올해 누적
+  const yIn = DB.events.filter(e=>e.type==='col'&&e.date>=yStart).reduce((a,e)=>a+e.qty,0);
+  const yRel= DB.events.filter(e=>e.type==='rel'&&e.date>=yStart).reduce((a,e)=>a+e.qty,0);
+  const yPl = DB.events.filter(e=>e.type==='plant'&&e.date>=yStart).reduce((a,e)=>a+e.qty,0);
+  const yDe = DB.events.filter(e=>e.type==='death'&&e.date>=yStart).reduce((a,e)=>a+e.qty,0);
+  const yCol= DB.batches.filter(b=>!b.winterIn&&b.col_date>=yStart).reduce((a,b)=>a+(b.collect_qty||0),0);
+  // 최근 1년
+  const rIn = DB.events.filter(e=>e.type==='col'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
+  const rRel= DB.events.filter(e=>e.type==='rel'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
+  const rPl = DB.events.filter(e=>e.type==='plant'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
+  const rDe = DB.events.filter(e=>e.type==='death'&&e.date>=oneY).reduce((a,e)=>a+e.qty,0);
+  const rCol= DB.batches.filter(b=>!b.winterIn&&b.col_date>=oneY).reduce((a,b)=>a+(b.collect_qty||0),0);
+  // 생존율(월동입고 대비 현재 재고)
+  const winBatchIds0 = new Set(DB.events.filter(e=>e.type==='col').map(e=>e.batch_id));
+  const survivalRate = rIn>0 ? Math.round(stock/rIn*100) : null;
+
   const aoa0 = [
-    ['🐝 두레수정벌 여왕벌 월동관리 보고서'],
-    ['출력일: '+td],
+    ['여왕벌 월동관리 현황_두레비스팜(주)'],
+    ['작성일시: '+stamp],
     [],
-    ['■ 현재 재고 현황'],
-    ['현재 월동 재고', stock],
+    ['【 핵심 지표 】'],
+    ['구분','수량','비고'],
+    ['현재 월동 재고', stock, '월동입고 − 월동해제'],
+    ['생존율', survivalRate!=null?survivalRate:'-', '재고 ÷ 최근1년 월동입고'],
     [],
-    ['■ 최근 1년 누적'],
-    ['채집 기록', sumCol],
-    ['월동입고', sumIn],
-    ['월동해제', sumRel],
-    ['산란세팅', sumPl],
-    ['폐사', sumDe],
+    ['【 '+yr+'년 누적 실적 】'],
+    ['단계','수량','비고'],
+    ['채집', yCol, ''],
+    ['월동입고', yIn, ''],
+    ['월동해제', yRel, ''],
+    ['산란세팅', yPl, ''],
+    ['폐사', yDe, ''],
     [],
-    ['※ 재고 = 월동입고 - 월동해제 (채집·산란·폐사는 기록용)'],
+    ['【 최근 1년 누적 】'],
+    ['단계','수량',''],
+    ['채집', rCol, ''],
+    ['월동입고', rIn, ''],
+    ['월동해제', rRel, ''],
+    ['산란세팅', rPl, ''],
+    ['폐사', rDe, ''],
+    [],
+    ['※ 재고 = 월동입고 − 월동해제 (채집·산란세팅·폐사는 기록용)'],
+    ['※ 본 자료는 앱 데이터 기준으로 자동 생성되었습니다.'],
   ];
   const ws0 = XS.utils.aoa_to_sheet(aoa0);
-  ws0['!cols']=[{wch:22},{wch:14}];
-  ws0['!merges']=[{s:{r:0,c:0},e:{r:0,c:1}}];
-  [5,8,9,10,11,12].forEach(r=>{ const cell=ws0['B'+r]; if(cell&&typeof cell.v==='number') cell.z='#,##0'; });
-  XS.utils.book_append_sheet(wb, ws0, '요약');
+  ws0['!cols']=[{wch:20},{wch:14},{wch:26}];
+  ws0['!merges']=[{s:{r:0,c:0},e:{r:0,c:2}},{s:{r:1,c:0},e:{r:1,c:2}}];
+  ['B6','B7','B11','B12','B13','B14','B15','B19','B20','B21','B22','B23'].forEach(cl=>{ if(ws0[cl]&&typeof ws0[cl].v==='number') ws0[cl].z='#,##0'; });
+  if(ws0['B7']&&typeof ws0['B7'].v==='number') ws0['B7'].z='0"%"';
+  // 스타일: 제목, 작성일시, 섹션 헤더
+  styleRow(ws0,0,3,styTitle); ws0['!rows']=[{hpt:26}];
+  styleCell(ws0,'A2',styStamp);
+  ['A4','A9','A17'].forEach(ad=>styleCell(ws0,ad,stySec));   // 섹션 제목
+  styleRow(ws0,4,3,styHead); styleRow(ws0,9,3,styHead); styleRow(ws0,17,3,styHead); // 표 헤더(구분/수량/비고)
+  XS.utils.book_append_sheet(wb, ws0, '종합요약');
 
   // ════════════════════════════════════
-  // 시트2: 월동 배치 현황 (최근순)
+  // 시트2: 월동 배치별 현황
   // ════════════════════════════════════
   const aoa1 = [];
-  aoa1.push(['월동 배치 현황 (최근순)']);
-  aoa1.push(['출력일: '+td]);
-  aoa1.push(['월동일','채집수량','월동입고','월동해제','산란세팅','폐사','현재잔량','잔량비율(%)']);
-  // 월동입고 이력 있는 배치만, 최근순
+  aoa1.push(['월동 배치별 현황 (최근순)']);
+  aoa1.push(['작성일시: '+stamp]);
+  aoa1.push([]);
+  aoa1.push(['월동입고일','채집수량','월동입고','월동해제','산란세팅','폐사','현재잔량','잔량비율(%)']);
   const winBatchIds = new Set(DB.events.filter(e=>e.type==='col').map(e=>e.batch_id));
   const batchesShown = [...DB.batches]
     .filter(b=>winBatchIds.has(b.id) || (b.wintered||0)>0)
     .sort((a,b)=>b.col_date.localeCompare(a.col_date));
-  let tIn=0,tRel=0,tPl=0,tDe=0,tRem=0;
+  let tIn=0,tRel=0,tPl=0,tDe=0,tRem=0,tCol=0;
   batchesShown.forEach(b=>{
     const st=batchStats(b);
-    tIn+=st.inQty; tRel+=st.relA; tPl+=st.plA; tDe+=st.deA; tRem+=st.rem;
+    tIn+=st.inQty; tRel+=st.relA; tPl+=st.plA; tDe+=st.deA; tRem+=st.rem; tCol+=st.collect;
     const ratio = st.inQty>0 ? Math.round(st.rem/st.inQty*100) : null;
     aoa1.push([b.col_date, st.collect||'', st.inQty, st.relA||'', st.plA||'', st.deA||'', st.rem, ratio]);
   });
-  aoa1.push(['합 계','', tIn, tRel||'', tPl||'', tDe||'', tRem, '']);
+  aoa1.push([]);
+  aoa1.push(['합계', tCol||'', tIn, tRel||'', tPl||'', tDe||'', tRem, '']);
   const ws1 = XS.utils.aoa_to_sheet(aoa1);
-  ws1['!cols']=[{wch:13},{wch:10},{wch:10},{wch:10},{wch:10},{wch:8},{wch:10},{wch:11}];
-  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}}];
-  for(let r=4; r<=batchesShown.length+4; r++){
-    ['B','C','D','E','F','G'].forEach(col=>{ if(ws1[col+r]&&typeof ws1[col+r].v==='number') ws1[col+r].z='#,##0'; });
-    if(ws1['H'+r]&&typeof ws1['H'+r].v==='number') ws1['H'+r].z='0"%"';
-  }
-  XS.utils.book_append_sheet(wb, ws1, '월동 배치 현황');
+  ws1['!cols']=[{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:8},{wch:10},{wch:12}];
+  ws1['!merges']=[{s:{r:0,c:0},e:{r:0,c:7}},{s:{r:1,c:0},e:{r:1,c:7}}];
+  colFmt(ws1,['B','C','D','E','F','G'],5,batchesShown.length+6,'#,##0');
+  colFmt(ws1,['H'],5,batchesShown.length+5,'0"%"');
+  styleRow(ws1,0,8,styTitle); ws1['!rows']=[{hpt:26}];
+  styleCell(ws1,'A2',styStamp);
+  styleRow(ws1,3,8,styHead);  // 헤더행(4행)
+  styleRow(ws1,batchesShown.length+5,8,styTotal);  // 합계행
+  XS.utils.book_append_sheet(wb, ws1, '월동배치현황');
 
   // ════════════════════════════════════
-  // 시트3: 이력 기록 (최근순)
+  // 시트3: 전체 이력 기록
   // ════════════════════════════════════
-  const typeKo={collect:'채집기록',col:'월동입고',col2:'월동입고',rel:'월동해제',plant:'산란세팅',death:'폐사'};
+  const typeKo={collect:'채집',col:'월동입고',rel:'월동해제',plant:'산란세팅',death:'폐사'};
   const aoa2=[];
-  aoa2.push(['이력 기록 (최근순)']);
-  aoa2.push(['출력일: '+td]);
-  aoa2.push(['날짜','구분','수량','관련 배치(월동일)','비고']);
+  aoa2.push(['전체 이력 기록 (최근순)']);
+  aoa2.push(['작성일시: '+stamp]);
+  aoa2.push([]);
+  aoa2.push(['날짜','구분','수량','관련 배치(월동입고일)','비고']);
   const evts=[...DB.events].sort((a,b)=>b.date.localeCompare(a.date));
   evts.forEach(e=>{
     const batch=DB.batches.find(x=>x.id===e.batch_id);
     aoa2.push([e.date, typeKo[e.type]||e.type, e.qty, batch?batch.col_date:'', e.note||'']);
   });
   const ws2=XS.utils.aoa_to_sheet(aoa2);
-  ws2['!cols']=[{wch:13},{wch:11},{wch:10},{wch:16},{wch:24}];
-  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:4}}];
-  for(let r=4; r<=evts.length+3; r++){ if(ws2['C'+r]) ws2['C'+r].z='#,##0'; }
-  XS.utils.book_append_sheet(wb, ws2, '이력 기록');
+  ws2['!cols']=[{wch:13},{wch:11},{wch:10},{wch:18},{wch:24}];
+  ws2['!merges']=[{s:{r:0,c:0},e:{r:0,c:4}},{s:{r:1,c:0},e:{r:1,c:4}}];
+  colFmt(ws2,['C'],5,evts.length+4,'#,##0');
+  styleRow(ws2,0,5,styTitle); ws2['!rows']=[{hpt:26}];
+  styleCell(ws2,'A2',styStamp);
+  styleRow(ws2,3,5,styHead);
+  XS.utils.book_append_sheet(wb, ws2, '전체이력');
 
   // ════════════════════════════════════
-  // 시트4: 채집·월동 계획표 (최근순)
+  // 시트4: 채집·월동입고 실적/계획
   // ════════════════════════════════════
   const aoa3=[];
-  aoa3.push(['채집·월동 계획표 (최근순)']);
-  aoa3.push(['출력일: '+td]);
-  aoa3.push(['채집일(목)','월동일(목)','월동해제일(금)','산란세팅일(월)','산란목표','채집권장','월동권장','실채집','채집달성률(%)','실월동입고','월동달성률(%)']);
+  aoa3.push(['채집·월동입고 실적/계획 (최근순)']);
+  aoa3.push(['작성일시: '+stamp]);
+  aoa3.push([]);
+  aoa3.push(['채집일(목)','월동입고일(목)','채집권장','실채집','채집달성률(%)','월동권장','실월동입고','월동달성률(%)','상태']);
   const scheds=[...SCHED].sort((a,b)=>b.collection_thu.localeCompare(a.collection_thu));
   scheds.forEach(s=>{
-    // 실채집 = 해당 채집일(±4일) 배치의 collect_qty (월동입고 배치 제외) — 화면과 동일
     const colAct=DB.batches.filter(b=>!b.winterIn && Math.abs(dn(b.col_date)-dn(s.collection_thu))<=4*DAY).reduce((a,b)=>a+(b.collect_qty||0),0);
     const cp=colAct>0?Math.round(colAct/s.collect_target*100):null;
-    // 실월동입고 = 월동일(채집+14, ±4일) col 이벤트 합 — 화면과 동일
     const winDay=addDays(s.collection_thu,14);
     const winAct=DB.events.filter(e=>e.type==='col'&&Math.abs(dn(e.date)-dn(winDay))<=4*DAY).reduce((a,e)=>a+e.qty,0);
     const wp=winAct>0?Math.round(winAct/s.wintering_target*100):null;
-    aoa3.push([s.collection_thu, addDays(s.collection_thu,14), s.release_fri, s.planting_mon,
-      s.planting_qty, s.collect_target, s.wintering_target, colAct||'', cp, winAct||'', wp]);
+    const status = winDay<td ? '완료' : (s.collection_thu<=td ? '진행중' : '예정');
+    aoa3.push([s.collection_thu, winDay, s.collect_target, colAct||'', cp, s.wintering_target, winAct||'', wp, status]);
   });
   const ws3=XS.utils.aoa_to_sheet(aoa3);
-  ws3['!cols']=[{wch:13},{wch:13},{wch:14},{wch:14},{wch:10},{wch:10},{wch:10},{wch:10},{wch:13},{wch:10},{wch:13}];
-  ws3['!merges']=[{s:{r:0,c:0},e:{r:0,c:10}}];
-  for(let r=4; r<=scheds.length+3; r++){
-    ['E','F','G','H','J'].forEach(col=>{ if(ws3[col+r]&&typeof ws3[col+r].v==='number') ws3[col+r].z='#,##0'; });
-    ['I','K'].forEach(col=>{ if(ws3[col+r]&&typeof ws3[col+r].v==='number') ws3[col+r].z='0"%"'; });
-  }
-  XS.utils.book_append_sheet(wb, ws3, '채집·월동 계획표');
+  ws3['!cols']=[{wch:13},{wch:14},{wch:10},{wch:10},{wch:13},{wch:10},{wch:11},{wch:13},{wch:8}];
+  ws3['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}},{s:{r:1,c:0},e:{r:1,c:8}}];
+  colFmt(ws3,['C','D','F','G'],5,scheds.length+4,'#,##0');
+  colFmt(ws3,['E','H'],5,scheds.length+4,'0"%"');
+  styleRow(ws3,0,9,styTitle); ws3['!rows']=[{hpt:26}];
+  styleCell(ws3,'A2',styStamp);
+  styleRow(ws3,3,9,styHead);
+  XS.utils.book_append_sheet(wb, ws3, '채집월동_실적계획');
 
-  XS.writeFile(wb, `두레수정벌_여왕벌월동_${td}.xlsx`);
-  toast('엑셀 보고서 다운로드 ✅');
+  // ════════════════════════════════════
+  // 시트5: 월동해제·산란세팅 실적/계획
+  // ════════════════════════════════════
+  const aoa4=[];
+  aoa4.push(['월동해제·산란세팅 실적/계획 (최근순)']);
+  aoa4.push(['작성일시: '+stamp]);
+  aoa4.push([]);
+  aoa4.push(['월동해제일(금)','산란세팅일(월)','월동해제권장','실해제','해제달성률(%)','산란목표','실산란','산란달성률(%)','상태']);
+  const scheds2=[...SCHED].sort((a,b)=>b.planting_mon.localeCompare(a.planting_mon));
+  scheds2.forEach(s=>{
+    const relAct=DB.events.filter(e=>e.type==='rel'&&Math.abs(dn(e.date)-dn(s.release_fri))<=4*DAY).reduce((a,e)=>a+e.qty,0);
+    const rp=relAct>0?Math.round(relAct/s.wintering_target*100):null;
+    const plAct=DB.events.filter(e=>e.type==='plant'&&Math.abs(dn(e.date)-dn(s.planting_mon))<=4*DAY).reduce((a,e)=>a+e.qty,0);
+    const pp=plAct>0?Math.round(plAct/s.planting_qty*100):null;
+    const status = plAct>0 ? '완료' : (s.planting_mon<=td ? '진행중' : '예정');
+    aoa4.push([s.release_fri, s.planting_mon, s.wintering_target, relAct||'', rp, s.planting_qty, plAct||'', pp, status]);
+  });
+  const ws4=XS.utils.aoa_to_sheet(aoa4);
+  ws4['!cols']=[{wch:14},{wch:14},{wch:12},{wch:10},{wch:13},{wch:10},{wch:10},{wch:13},{wch:8}];
+  ws4['!merges']=[{s:{r:0,c:0},e:{r:0,c:8}},{s:{r:1,c:0},e:{r:1,c:8}}];
+  colFmt(ws4,['C','D','F','G'],5,scheds2.length+4,'#,##0');
+  colFmt(ws4,['E','H'],5,scheds2.length+4,'0"%"');
+  styleRow(ws4,0,9,styTitle); ws4['!rows']=[{hpt:26}];
+  styleCell(ws4,'A2',styStamp);
+  styleRow(ws4,3,9,styHead);
+  XS.utils.book_append_sheet(wb, ws4, '월동해제산란_실적계획');
+
+  XS.writeFile(wb, `여왕벌월동관리현황_두레비스팜_${td}.xlsx`);
+  toast('엑셀 다운로드 ✅');
 }
 
 function showInput(which){
