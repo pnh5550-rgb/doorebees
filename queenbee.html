@@ -96,12 +96,13 @@ body{padding-bottom:calc(var(--nav-h) + 8px);}
 .bg-b{background:var(--BL);color:var(--B);}
 .bg-gray{background:#efefeb;color:var(--sub);}
 .bg-rel{background:#e8f5e9;color:#1e7e34;}
-.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:9px 0 0;}
-.flow-box{border-radius:9px;padding:8px 14px;font-size:15px;font-weight:700;}
+.flow{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:9px 0 0;}
+.flow-box{border-radius:8px;padding:5px 9px;font-size:12px;font-weight:700;}
 .fb-g{background:var(--GL);color:var(--G);}
 .fb-a{background:var(--AL);color:var(--A);}
 .fb-b{background:var(--BL);color:var(--B);}
-.flow-arr{color:var(--muted);font-size:12px;}
+.fb-sale{background:#fff4e0;color:#8a5a00;}
+.flow-arr{color:var(--muted);font-size:10px;}
 .prog{margin-top:10px;}
 .prog-bar{height:8px;background:#e8e4dc;border-radius:4px;overflow:hidden;}
 .prog-fill{height:100%;border-radius:4px;transition:width .4s;}
@@ -573,6 +574,11 @@ textarea{resize:none;height:68px;font-size:14px;}
       <div style="display:flex;align-items:center;gap:6px;background:#f0ebe0;border-radius:9px;padding:8px 10px;flex:1;min-width:100px;">
         <span style="font-size:12px;color:var(--sub);white-space:nowrap;">월동→산란</span>
         <input class="cfg-num" type="number" id="cfgS2" min="1" max="100" value="87" style="width:48px!important;font-size:14px!important;color:#0a5f6e!important;background:#fff!important;padding:6px 4px!important;">
+        <span class="cfg-unit">%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;background:#f0ebe0;border-radius:9px;padding:8px 10px;flex:1;min-width:100px;">
+        <span style="font-size:12px;color:var(--sub);white-space:nowrap;">산란→판매</span>
+        <input class="cfg-num" type="number" id="cfgSaleRate" min="1" max="100" value="43" style="width:48px!important;font-size:14px!important;color:#8a5a00!important;background:#fff!important;padding:6px 4px!important;">
         <span class="cfg-unit">%</span>
       </div>
     </div>
@@ -1329,20 +1335,22 @@ function renderHome(){
           <div style="font-size:13px;font-weight:800;color:${st.text};display:flex;justify-content:space-between;"><span>월동 ${comma(winAct)}/${comma(s.wintering_target)}</span><span>${winAct>0?wPctH+'%':'-'}</span></div>
         </div>
       </div>`:''}
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+      <div style="display:flex;gap:3px;align-items:center;flex-wrap:wrap;">
         ${idx===0
-          ? `<div style="background:rgba(255,255,255,.35);border-radius:7px;padding:5px 11px;font-size:14px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,.65);">🐝 채집 ${fmtKo(s.collection_thu)}</div>`
-          : `<div style="background:${st.box};border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:${st.text};">🐝 채집 ${fmtKo(s.collection_thu)}</div>`
+          ? `<div style="background:rgba(255,255,255,.35);border-radius:6px;padding:3px 7px;font-size:12px;font-weight:900;color:#fff;-webkit-text-fill-color:#fff;border:1.5px solid rgba(255,255,255,.65);">🐝 채집 ${fmtKo(s.collection_thu)}</div>`
+          : `<div style="background:${st.box};border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">🐝 채집 ${fmtKo(s.collection_thu)}</div>`
         }
         <span style="font-size:13px;color:rgba(255,255,255,.8);font-weight:700;">→</span>
-        ${idx!==0
-          ? `<div style="background:rgba(255,255,255,.35);border-radius:7px;padding:5px 11px;font-size:14px;font-weight:900;color:#fff;border:2px solid rgba(255,255,255,.65);">🌡 월동 ${fmtKo(winterDate)}</div>`
-          : `<div style="background:${st.box};border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:${st.text};">🌡 월동 ${fmtKo(winterDate)}</div>`
+        ${idx===0
+          ? `<div style="background:rgba(255,255,255,.35);border-radius:6px;padding:3px 7px;font-size:12px;font-weight:900;color:#fff;-webkit-text-fill-color:#fff;border:1.5px solid rgba(255,255,255,.65);">🌡 월동 ${fmtKo(winterDate)}</div>`
+          : `<div style="background:${st.box};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">🌡 월동 ${fmtKo(winterDate)}</div>`
         }
-        <span style="font-size:11px;color:${st.sub};">→</span>
-        <div style="background:${st.box};border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:${st.text};">해제 ${fmtKo(s.release_fri)}</div>
-        <span style="font-size:11px;color:${st.sub};">→</span>
-        <div style="background:${st.box};border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:${st.text};">산란 ${fmtKo(s.planting_mon)}</div>
+        <span style="font-size:10px;color:${st.sub};">→</span>
+        <div style="background:${st.box};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">해제 ${fmtKo(s.release_fri)}</div>
+        <span style="font-size:10px;color:${st.sub};">→</span>
+        <div style="background:${st.box};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <span style="font-size:10px;color:${st.sub};">→</span>
+        <div style="background:${st.box};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">💰 판매 ${fmtKo(addDays(s.planting_mon,70))}</div>
       </div>
     </div>`;
   });
@@ -1373,6 +1381,8 @@ function renderHome(){
         <div class="flow-box fb-a">월동해제 ${fmtKo(s.release_fri)}</div>
         <span class="flow-arr">→</span>
         <div class="flow-box fb-b">산란세팅 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <span class="flow-arr">→</span>
+        <div class="flow-box fb-sale">💰 판매 ${fmtKo(addDays(s.planting_mon,70))} · ${comma(Math.round(s.planting_qty*(CFG.saleRate||43)/100))}</div>
       </div>
     </div>`;
   });
@@ -1699,19 +1709,21 @@ function renderPlan(mode){
         </div>
       </div>
       ${progHtml}
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:6px;">
-        ${isPendingWinter
-          ? `<div style="background:rgba(255,255,255,.18);border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#fff;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
+      <div style="display:flex;gap:3px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        ${(isPendingWinter && !isPastMode)
+          ? `<div style="background:rgba(255,255,255,.18);border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:#fff;-webkit-text-fill-color:#fff;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
              <span style="font-size:11px;color:rgba(255,255,255,.7);">→</span>
-             <div style="background:rgba(255,255,255,.35);border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#fff;border:1.5px solid rgba(255,255,255,.6);">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>`
-          : `<div style="background:${isPast?'rgba(0,0,0,.06)':boxBg};border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:${cardTextColor};border:${isThisWeek?'1.5px solid rgba(255,255,255,.5)':'1px solid #d0ccc0'};">🐝 채집 ${fmtKo(s.collection_thu)}</div>
-             <span style="font-size:11px;color:${cardSubColor};">→</span>
-             <div style="background:${boxBg2};border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:${cardTextColor};">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>`
+             <div style="background:rgba(255,255,255,.35);border-radius:6px;padding:3px 7px;font-size:11px;font-weight:900;color:#fff;-webkit-text-fill-color:#fff;border:1.5px solid rgba(255,255,255,.6);">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>`
+          : `<div style="background:${isPast?'rgba(0,0,0,.06)':boxBg};border-radius:6px;padding:3px 7px;font-size:11px;font-weight:900;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};border:${isThisWeek?'1.5px solid rgba(255,255,255,.5)':'1px solid #d0ccc0'};">🐝 채집 ${fmtKo(s.collection_thu)}</div>
+             <span style="font-size:10px;color:${cardSubColor};">→</span>
+             <div style="background:${boxBg2};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>`
         }
-        <span style="font-size:11px;color:${cardSubColor};">→</span>
-        <div style="background:${isPendingWinter||isThisWeek?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:${cardTextColor};">해제 ${fmtKo(s.release_fri)}</div>
-        <span style="font-size:11px;color:${cardSubColor};">→</span>
-        <div style="background:${isPendingWinter||isThisWeek?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:${cardTextColor};">산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <span style="font-size:10px;color:${cardSubColor};">→</span>
+        <div style="background:${(isPendingWinter||isThisWeek)&&!isPastMode?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">해제 ${fmtKo(s.release_fri)}</div>
+        <span style="font-size:10px;color:${cardSubColor};">→</span>
+        <div style="background:${(isPendingWinter||isThisWeek)&&!isPastMode?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <span style="font-size:10px;color:${cardSubColor};">→</span>
+        <div style="background:${isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">💰 판매 ${fmtKo(addDays(s.planting_mon,70))} · ${comma(Math.round(s.planting_qty*(CFG.saleRate||43)/100))}</div>
       </div>
     </div>`;
   });
@@ -1798,14 +1810,16 @@ function renderPlantResult(){
           <div style="font-size:13px;font-weight:800;color:${plPctC};display:flex;justify-content:space-between;"><span>산란 ${comma(plAct)}/${comma(s.planting_qty)}</span><span>${plAct>0?plPct+'%':'-'}</span></div>
         </div>
       </div>
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:6px;">
-        <div style="background:#f0f3f7;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#3a4a5a;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
-        <span style="font-size:11px;color:var(--muted);">→</span>
-        <div style="background:#f0f3f7;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#3a4a5a;">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>
-        <span style="font-size:11px;color:var(--muted);">→</span>
-        <div style="background:#eaf0f8;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#1a3a5d;border:1.5px solid #b8d0e8;">🔓 해제 ${fmtKo(s.release_fri)}</div>
-        <span style="font-size:11px;color:var(--muted);">→</span>
-        <div style="background:#f1f7e8;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#3a5a1a;border:1.5px solid #c5e0a0;">🌱 산란 ${fmtKo(s.planting_mon)}</div>
+      <div style="display:flex;gap:2px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        <div style="background:#f0f3f7;border-radius:5px;padding:2px 5px;font-size:10px;font-weight:700;color:#3a4a5a;-webkit-text-fill-color:#3a4a5a;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#f0f3f7;border-radius:5px;padding:2px 5px;font-size:10px;font-weight:700;color:#3a4a5a;-webkit-text-fill-color:#3a4a5a;">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#eaf0f8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:900;color:#1a3a5d;-webkit-text-fill-color:#1a3a5d;border:1px solid #b8d0e8;">🔓 해제 ${fmtKo(s.release_fri)}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#f1f7e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:900;color:#3a5a1a;-webkit-text-fill-color:#3a5a1a;border:1px solid #c5e0a0;">🌱 산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#f5f0e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#6b5430;-webkit-text-fill-color:#6b5430;">💰 판매 ${fmtKo(addDays(s.planting_mon,70))} · ${comma(Math.round(s.planting_qty*(CFG.saleRate||43)/100))}</div>
       </div>
     </div>`;
   });
@@ -1875,14 +1889,16 @@ function renderPlantPlan(){
           <div style="font-size:12px;color:var(--sub);margin-top:2px;font-weight:700;">산란 목표수량</div>
         </div>
       </div>
-      <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:6px;">
-        <div style="background:#f0f3f7;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#3a4a5a;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
-        <span style="font-size:11px;color:var(--muted);">→</span>
-        <div style="background:#f0f3f7;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;color:#3a4a5a;">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>
-        <span style="font-size:11px;color:var(--muted);">→</span>
-        <div style="background:#eef4f9;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#1a3a5d;border:1.5px solid #b8d0e8;">🔓 해제 ${fmtKo(s.release_fri)}</div>
-        <span style="font-size:11px;color:var(--muted);">→</span>
-        <div style="background:#f1f7e8;border-radius:6px;padding:4px 9px;font-size:12px;font-weight:900;color:#3a5a1a;border:1.5px solid #c5e0a0;">🌱 산란 ${fmtKo(s.planting_mon)}</div>
+      <div style="display:flex;gap:2px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        <div style="background:#f0f3f7;border-radius:5px;padding:2px 5px;font-size:10px;font-weight:700;color:#3a4a5a;-webkit-text-fill-color:#3a4a5a;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#f0f3f7;border-radius:5px;padding:2px 5px;font-size:10px;font-weight:700;color:#3a4a5a;-webkit-text-fill-color:#3a4a5a;">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#eef4f9;border-radius:6px;padding:3px 7px;font-size:11px;font-weight:900;color:#1a3a5d;-webkit-text-fill-color:#1a3a5d;border:1.5px solid #b8d0e8;">🔓 해제 ${fmtKo(s.release_fri)}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#f1f7e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:900;color:#3a5a1a;-webkit-text-fill-color:#3a5a1a;border:1px solid #c5e0a0;">🌱 산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#f5f0e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#6b5430;-webkit-text-fill-color:#6b5430;">💰 판매 ${fmtKo(addDays(s.planting_mon,70))} · ${comma(Math.round(s.planting_qty*(CFG.saleRate||43)/100))}</div>
       </div>
     </div>`;
   });
@@ -1902,13 +1918,14 @@ function defaultYear(mode){
 /* ═══════════════════════════════════
    설정
 ═══════════════════════════════════ */
-let CFG = {weeks:11, s1:80, s2:87};
+let CFG = {weeks:11, s1:80, s2:87, saleRate:43};
 function loadCfg(){ try{ const s=localStorage.getItem('qbCFG28'); if(s) CFG=JSON.parse(s); }catch(e){} }
 function saveCfg(){
   if(!requireAdmin()) return;
   CFG.weeks = parseInt(document.getElementById('cfgWeeks').value)||11;
   CFG.s1    = parseInt(document.getElementById('cfgS1').value)||80;
   CFG.s2    = parseInt(document.getElementById('cfgS2').value)||87;
+  const _sr=document.getElementById('cfgSaleRate'); if(_sr) CFG.saleRate = parseInt(_sr.value)||43;
   localStorage.setItem('qbCFG28', JSON.stringify(CFG));
   updateCfgPreview();
   toast('설정 저장 ✅');
@@ -2438,10 +2455,11 @@ function goTab(id){
 }
 
 function applySettings(){
-  const w=CFG.weeks||11, s1=CFG.s1||80, s2=CFG.s2||87;
+  const w=CFG.weeks||11, s1=CFG.s1||80, s2=CFG.s2||87, sr=CFG.saleRate||43;
   document.getElementById('cfgWeeks').value=w;
   document.getElementById('cfgS1').value=s1;
   document.getElementById('cfgS2').value=s2;
+  const _srEl=document.getElementById('cfgSaleRate'); if(_srEl) _srEl.value=sr;
   const dw=document.getElementById('dispWeeks');
   const ds1=document.getElementById('dispS1');
   const ds2=document.getElementById('dispS2');
