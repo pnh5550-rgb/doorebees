@@ -1658,6 +1658,7 @@ function renderPlan(mode){
     const daysFromCollect = Math.round((dn(td)-dn(s.collection_thu))/DAY);
     let cardBgColor, cardTextColor, cardSubColor, boxBg, boxBg2, cardBorder, cardShadow, cardLabel;
 
+    let accentColor='#0a5f6e';
     if(isPendingWinter && !isPastMode){
       // 채집 후 월동 전 - 홈 배너와 동일 색상
       const daysToWin = Math.round((dn(addDays(s.collection_thu,14))-dn(td))/DAY);
@@ -1666,14 +1667,17 @@ function renderPlan(mode){
       else {                         cardBgColor='#1e7e34'; cardBorder='1.5px solid rgba(255,255,255,.2)'; cardShadow='none'; cardLabel=`D+${daysFromCollect}`;}
       cardTextColor='#fff'; cardSubColor='rgba(255,255,255,.85)';
       boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
+      accentColor='rgba(255,255,255,.55)';
     } else if(isThisWeek && !isPastMode){
       cardBgColor='#0a5f6e'; cardTextColor='#fff'; cardSubColor='rgba(255,255,255,.85)';
       boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
       cardBorder='2px solid rgba(255,255,255,.3)'; cardShadow='0 4px 16px rgba(10,95,110,.3)'; cardLabel='D-day';
+      accentColor='rgba(255,255,255,.55)';
     } else if(isPast || isPastMode){
       cardBgColor='#faf6ef'; cardTextColor='#1a1610'; cardSubColor='var(--sub)';
       boxBg='#f5f0e8'; boxBg2='#eaf0f8';
       cardBorder='1.5px solid #e5ddd0'; cardShadow='none'; cardLabel='완료';
+      accentColor='#c9a961';
     } else {
       // 미래 - 오늘 기준 채집일까지 D-N
       const daysToCollect = Math.round((dn(s.collection_thu)-dn(td))/DAY);
@@ -1681,20 +1685,18 @@ function renderPlan(mode){
       boxBg='#f5f0e8'; boxBg2='#eaf0f8';
       cardBorder='1.5px solid var(--border)'; cardShadow='none';
       cardLabel = daysToCollect===0?'D-day':`D-${daysToCollect}`;
+      accentColor='#0a5f6e';
     }
 
-    html+=`<div style="border-radius:13px;padding:12px 14px;margin-bottom:9px;background:${cardBgColor};border:${cardBorder};box-shadow:${cardShadow};">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:12px;font-weight:800;color:${cardSubColor};">&nbsp;</div>
-        ${badge}
-      </div>
+    html+=`<div style="border-radius:11px;padding:12px 14px 12px 15px;margin-bottom:9px;background:${cardBgColor};border:1px solid ${accentColor};border-left:4px solid ${accentColor};box-shadow:${cardShadow};">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
         <div>
           <div style="font-size:12px;font-weight:800;color:${cardSubColor};margin-bottom:3px;">${(()=>{const dc=Math.round((dn(s.collection_thu)-dn(td))/DAY);return dc>0?`D-${dc}`:dc===0?'D-day':`D+${Math.abs(dc)}`;})()}</div>
           <div style="font-size:16px;font-weight:900;color:${cardTextColor};">${fmtKo(s.collection_thu)} 채집</div>
         </div>
-        <div style="text-align:right;">
-          <div style="font-size:12px;font-weight:800;color:${cardSubColor};margin-bottom:3px;">${(()=>{const dw=Math.round((dn(addDays(s.collection_thu,14))-dn(td))/DAY);return dw>0?`D-${dw}`:dw===0?'D-day':`D+${Math.abs(dw)}`;})()}</div>
+        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+          ${badge}
+          <div style="font-size:12px;font-weight:800;color:${cardSubColor};">${(()=>{const dw=Math.round((dn(addDays(s.collection_thu,14))-dn(td))/DAY);return dw>0?`D-${dw}`:dw===0?'D-day':`D+${Math.abs(dw)}`;})()}</div>
           <div style="font-size:16px;font-weight:900;color:${cardTextColor};opacity:${isPast?'0.5':'1'};">${fmtKo(addDays(s.collection_thu,14))} 월동</div>
         </div>
       </div>
@@ -1776,10 +1778,10 @@ function renderPlantResult(){
     const relPctC=relAct>0?_pc(relPct):'var(--muted)';
     const plPctC=plAct>0?_pc(plPct):'var(--muted)';
     // 채집/월동 실적 카드와 동일한 색 체계
-    const cardBg='#faf6ef', cardBorder='1.5px solid #e5ddd0';
+    const cardBg='#faf6ef', accentColor='#c9a961';
     const boxBg='#eaf0f8', boxBg2='#f1f7e8';  // 해제=블루톤, 산란=그린톤
     const subC='var(--sub)';
-    html+=`<div style="border-radius:13px;padding:12px 14px;margin-bottom:9px;background:${cardBg};border:${cardBorder};box-shadow:none;">
+    html+=`<div style="border-radius:11px;padding:12px 14px 12px 15px;margin-bottom:9px;background:${cardBg};border:1px solid ${accentColor};border-left:4px solid ${accentColor};box-shadow:none;">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
         <div>
           <div style="font-size:12px;font-weight:800;color:${subC};margin-bottom:3px;">완료</div>
@@ -1868,7 +1870,7 @@ function renderPlantPlan(){
     const dRelL=dRel>0?`D-${dRel}`:dRel===0?'D-day':`D+${Math.abs(dRel)}`;
     const dPl=Math.round((dn(s.planting_mon)-dn(td))/DAY);
     const dPlL=dPl>0?`D-${dPl}`:dPl===0?'D-day':`D+${Math.abs(dPl)}`;
-    html+=`<div style="border-radius:13px;padding:12px 14px;margin-bottom:9px;background:#fff;border:1.5px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.04);">
+    html+=`<div style="border-radius:11px;padding:12px 14px 12px 15px;margin-bottom:9px;background:#fff;border:1px solid #1a5fa0;border-left:4px solid #1a5fa0;box-shadow:none;">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
         <div>
           <div style="font-size:12px;font-weight:800;color:#1a5fa0;margin-bottom:3px;">${dRelL}</div>
