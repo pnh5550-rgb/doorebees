@@ -630,7 +630,7 @@ function SanCard({room,st,big}){
       <div className="bar-bg"><div className={`bar-fill bar-${c}`} style={{width:`${Math.min(100,pct)}%`}}/></div>
       <div className="rc-stats">
         <div style={{textAlign:'left'}}><div className="rc-sl">현재세팅</div><b className="rc-sv sv-occ">{fmt(st.occ)}</b></div>
-        <div style={{textAlign:'center'}}><div className="rc-sl">여유</div><b className={`rc-sv${st.avail<200?' sv-low':''}`}>{fmt(st.avail)}</b></div>
+        <div style={{textAlign:'left'}}><div className="rc-sl">여유</div><b className={`rc-sv${st.avail<200?' sv-low':''}`}>{fmt(st.avail)}</b></div>
       </div>
       <div style={{marginTop:6,fontSize:13,color:'var(--tx3)',fontWeight:700,textAlign:'right'}}>총 {fmt(st.cap)}</div>
     </div>
