@@ -1144,10 +1144,10 @@ function App(){
                     <span>산란세팅 {fmtDate(s.date)} · {fmt(s.amount)}</span>
                     {(()=>{
                       // 완전 완료면 산란세팅과 동일 색(기본), 아니면 다음 예정 D-day 색 따라감
-                      if(s.done)return <span style={{color:'var(--tx2)',fontWeight:800}}>잔량 {fmt(s.remain)}</span>;
+                      if(s.done)return <span style={{color:'var(--tx2)'}}>잔량 {fmt(s.remain)}</span>;
                       const nd=s.done1?d2:d1;  // 다음 예정(1차 끝났으면 2차)
                       const col=nd.cls==='dd-td'?'#DC2626':nd.cls==='dd-nr'?'#EA580C':nd.cls==='dd-sn'?'#CA8A04':'#0F766E';
-                      return <span style={{color:col,fontWeight:800}}>잔량 {fmt(s.remain)}</span>;
+                      return <span style={{color:col}}>잔량 {fmt(s.remain)}</span>;
                     })()}
                   </div>
                   <div className="si-dates">
