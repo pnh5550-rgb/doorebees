@@ -933,7 +933,7 @@ function App(){
           if(d1<=d2)p1+=pg.amount;else p2+=pg.amount;
         });
         return{date:b.date,room:b.room,amount:b.san,s1,s2,sel1Done,sel2Done,done1,done2,done,
-               q1:b.s1,q2:b.s2,p1,p2,pegQty:b.peg,rate:b.rate};
+               q1:b.s1,q2:b.s2,p1,p2,pegQty:b.peg,rate:b.rate,remain:b.remain};
       });
   },[entries,yr]);
 
@@ -1080,17 +1080,40 @@ function App(){
               onChange={e=>setForm(f=>({...f,amount:e.target.value}))}
               onKeyDown={e=>e.key==='Enter'&&isAdmin&&submitEntry()}/>
           </div>
-          {hasPreview&&(
+          {hasPreview&&(()=>{
+            const amt=Number(form.amount);
+            const cur=form.room&&sanSt[form.room]?sanSt[form.room]:null;
+            // 입력 후 예상: 산란=현재세팅↑·여유↓ / 사육·폐기=현재세팅↓·여유↑
+            let afterOcc=null,afterAvail=null;
+            if(cur){
+              if(form.type==='산란'){afterOcc=cur.occ+amt;afterAvail=Math.max(0,cur.cap-afterOcc);}
+              else{afterOcc=Math.max(0,cur.occ-amt);afterAvail=cur.cap-afterOcc;}
+            }
+            return(
             <div className="in-preview">
               <div className="in-preview-h"><i className="ti ti-eye"/> 입력 확인</div>
               <div className="in-preview-g">
                 <div><span>날짜</span><b>{form.date}</b></div>
                 <div><span>룸</span><b style={{color:'var(--san-t)'}}>{form.room}</b></div>
                 <div><span>종류</span><b>{typeLabel(form.type)}</b></div>
-                <div><span>수량</span><b style={{color:'var(--san-t)',fontSize:18}}>{fmt(Number(form.amount))}</b></div>
+                <div><span>처리 수량</span><b style={{color:'var(--san-t)',fontSize:18}}>{fmt(amt)}</b></div>
               </div>
+              {cur&&(
+                <div style={{marginTop:12,paddingTop:12,borderTop:'1px dashed var(--san)',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                  <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                    <span style={{fontSize:12,color:'var(--tx2)',fontWeight:600}}>현재세팅 (입력 후)</span>
+                    <b style={{fontSize:16}}><span style={{color:'var(--tx3)'}}>{fmt(cur.occ)}</span> <span style={{color:'var(--tx3)'}}>→</span> <span style={{color:'var(--san-t)'}}>{fmt(afterOcc)}</span></b>
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                    <span style={{fontSize:12,color:'var(--tx2)',fontWeight:600}}>여유 (입력 후)</span>
+                    <b style={{fontSize:16}}><span style={{color:'var(--tx3)'}}>{fmt(cur.avail)}</span> <span style={{color:'var(--tx3)'}}>→</span> <span style={{color:afterAvail<0?'var(--rd-t)':'#22C55E'}}>{fmt(afterAvail)}</span></b>
+                  </div>
+                </div>
+              )}
+              {cur&&form.type==='산란'&&afterAvail<0&&<div style={{marginTop:8,fontSize:12,color:'var(--rd-t)',fontWeight:700}}>⚠ 여유 공간을 초과합니다</div>}
             </div>
-          )}
+            );
+          })()}
           {!isAdmin&&<div className="readonly-box"><i className="ti ti-lock"/> 관리자 로그인 후 입력 가능</div>}
           <button className="sbtn san" disabled={!isAdmin} onClick={submitEntry}><i className="ti ti-check"/> 입력 완료</button>
         </>)}
@@ -1108,13 +1131,23 @@ function App(){
               const d1=dday(s.s1),d2=dday(s.s2);
               return(
                 <div key={i} className={`si${s.done?' si-done':''}`}>
-                  <div className="si-h">
-                    <div><div className="si-n">{s.room}</div><div className="si-m">산란세팅 {fmtDate(s.date)} · {fmt(s.amount)}</div></div>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:11}}>
+                    <div className="si-n">{s.room}</div>
                     {(()=>{
                       if(s.done)return <span className="badge b-dg">완료</span>;
                       const dd1=s.done1?d2:d1;
                       const bcls=dd1.cls==='dd-td'?'dg':dd1.cls==='dd-nr'?'tg':dd1.cls==='dd-sn'?'wn':'ok';
                       return <span className={`badge b-${bcls}`}>{dd1.txt}</span>;
+                    })()}
+                  </div>
+                  <div className="si-m" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:0,marginBottom:9}}>
+                    <span>산란세팅 {fmtDate(s.date)} · {fmt(s.amount)}</span>
+                    {(()=>{
+                      // 완전 완료면 산란세팅과 동일 색(기본), 아니면 다음 예정 D-day 색 따라감
+                      if(s.done)return <span style={{color:'var(--tx2)',fontWeight:800}}>잔량 {fmt(s.remain)}</span>;
+                      const nd=s.done1?d2:d1;  // 다음 예정(1차 끝났으면 2차)
+                      const col=nd.cls==='dd-td'?'#DC2626':nd.cls==='dd-nr'?'#EA580C':nd.cls==='dd-sn'?'#CA8A04':'#0F766E';
+                      return <span style={{color:col,fontWeight:800}}>잔량 {fmt(s.remain)}</span>;
                     })()}
                   </div>
                   <div className="si-dates">
