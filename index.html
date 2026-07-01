@@ -470,11 +470,11 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 /* 추가 컴포넌트 CSS */
 .room-layout{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
 .room-sub{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.rc{background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--san);border-radius:var(--r);padding:13px 15px;box-shadow:var(--sh);transition:transform .12s,box-shadow .12s}
+.rc{background:var(--sf);border:1.5px solid var(--san);border-left:4px solid var(--san);border-radius:var(--r);padding:13px 15px;box-shadow:var(--sh);transition:transform .12s,box-shadow .12s}
 .rc:active{transform:scale(.985)}
-.rc-na{border-left-color:var(--sak)}
+.rc-na{border-color:#1D4ED8}
 .rc-big{padding:16px 18px}
-.san-rc{border-left:4px solid var(--san)}
+.san-rc{}
 .rc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .rc-name{font-size:17px;font-weight:900;color:var(--tx)}
 .rc-big .rc-name{font-size:22px}
@@ -621,7 +621,7 @@ function SanCard({room,st,big}){
   const pct=st.rate;
   const c=pct<50?'ok':pct<75?'go':pct<90?'wn':'dg';
   return(
-    <div className={`rc san-rc${big?' rc-big':''}`}>
+    <div className={`rc san-rc${big?' rc-big':''}${room.startsWith('나')?' rc-na':''}`}>
       <div className="rc-top">
         <span className="rc-name">{room}</span>
         <span className={`badge b-${c}`}>세팅 {pct}%</span>
