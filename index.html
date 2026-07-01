@@ -629,7 +629,7 @@ function SanCard({room,st,big}){
       </div>
       <div className="bar-bg"><div className={`bar-fill bar-${c}`} style={{width:`${Math.min(100,pct)}%`}}/></div>
       <div className="rc-stats">
-        <div style={{textAlign:'left'}}><div className="rc-sl">현재세팅</div><b className="rc-sv sv-occ">{fmt(st.occ)}</b></div>
+        <div style={{textAlign:'left'}}><div className="rc-sl">현재세팅</div><b className="rc-sv sv-occ" style={room.startsWith('나')?{color:'#1D4ED8'}:undefined}>{fmt(st.occ)}</b></div>
         <div style={{textAlign:'left'}}><div className="rc-sl">여유</div><b className={`rc-sv${st.avail<200?' sv-low':''}`}>{fmt(st.avail)}</b></div>
       </div>
       <div style={{marginTop:6,fontSize:13,color:'var(--tx3)',fontWeight:700,textAlign:'right'}}>총 {fmt(st.cap)}</div>
@@ -765,7 +765,7 @@ function SanBatchView({entries,year}){
             <div style={{fontSize:12,color:peg>0?'var(--peg-t)':'var(--tx3)',fontWeight:700,marginTop:2}}>{peg>0?pegR+'%':done?'없음':''}</div>
           </div>
           <div style={{background:'var(--san-h)',borderRadius:9,padding:'8px 9px',border:'1px solid #86EFAC'}}>
-            <div style={{fontSize:12,color:'var(--san-t)',fontWeight:700,marginBottom:3}}>📦 잔류</div>
+            <div style={{fontSize:12,color:'var(--san-t)',fontWeight:700,marginBottom:3}}>📦 잔량</div>
             <div style={{fontSize:18,fontWeight:800,color:'var(--san-t)',letterSpacing:'-.3px'}}>{fmt(remain)}</div>
             <div style={{fontSize:12,color:'var(--san-t)',fontWeight:700,marginTop:2}}>{g.san>0?Math.round(remain/g.san*100)+'%':''}</div>
           </div>
