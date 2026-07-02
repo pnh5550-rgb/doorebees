@@ -1041,9 +1041,12 @@ function plantDateChange(){
   const relTotal=relBefore.filter(e=>e.date===latest).reduce((a,e)=>a+e.qty,0);
   // 이미 세팅한 양
   const plantDone=DB.events.filter(e=>e.type==='plant' && e.date>=latest && e.date<=d).reduce((a,e)=>a+e.qty,0);
-  const remain=Math.max(0,relTotal-plantDone);
+  // 이미 폐사 처리한 양 (해당 월동해제 이후)
+  const deadDone=DB.events.filter(e=>e.type==='death' && e.date>=latest && e.date<=d).reduce((a,e)=>a+e.qty,0);
+  const remain=Math.max(0,relTotal-plantDone-deadDone);
   const doneTxt=plantDone>0?` · 기세팅 ${comma(plantDone)}`:'';
-  hint.innerHTML=`🌱 월동해제(${fmtKo(latest)}) <b>${comma(relTotal)}</b>마리${doneTxt}<br>→ 잔여 <b>${comma(remain)}</b>마리 · 산란세팅 수량을 입력하세요`;
+  const deadTxt=deadDone>0?` · 폐사 ${comma(deadDone)}`:'';
+  hint.innerHTML=`🌱 월동해제(${fmtKo(latest)}) <b>${comma(relTotal)}</b>마리${doneTxt}${deadTxt}<br>→ 잔여 <b>${comma(remain)}</b>마리 · 산란세팅 수량을 입력하세요`;
   hint.classList.add('show');
 }
 
@@ -1212,9 +1215,12 @@ function deathDateChange(){
   const latest=relBefore[0].date;
   const relTotal=relBefore.filter(e=>e.date===latest).reduce((a,e)=>a+e.qty,0);
   const plantDone=DB.events.filter(e=>e.type==='plant' && e.date>=latest && e.date<=d).reduce((a,e)=>a+e.qty,0);
-  const remain=Math.max(0,relTotal-plantDone);
+  // 이미 기록한 폐사분
+  const deadDone=DB.events.filter(e=>e.type==='death' && e.date>=latest && e.date<=d).reduce((a,e)=>a+e.qty,0);
+  const remain=Math.max(0,relTotal-plantDone-deadDone);
   const plantTxt=plantDone>0?` · 산란세팅 <b>${comma(plantDone)}</b>마리`:'';
-  hint.innerHTML=`💀 월동해제(${fmtKo(latest)}) <b>${comma(relTotal)}</b>마리${plantTxt}<br>→ 나머지 <b>${comma(remain)}</b>마리 폐사 기록`;
+  const deadTxt=deadDone>0?` · 폐사 <b>${comma(deadDone)}</b>마리`:'';
+  hint.innerHTML=`💀 월동해제(${fmtKo(latest)}) <b>${comma(relTotal)}</b>마리${plantTxt}${deadTxt}<br>→ 나머지 <b>${comma(remain)}</b>마리 폐사 기록`;
   hint.classList.add('show');
 }
 
