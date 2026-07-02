@@ -1617,8 +1617,8 @@ function renderPlan(mode){
     if(ym!==lastMonth){ lastMonth=ym; const [y,m]=ym.split('-'); html+=`<div class="sec">${y}년 ${parseInt(m)}월</div>`; }
 
     let badge='', progHtml='';
-    // 어두운 배경 카드 여부 (채집 후 월동 전) — 진행바 글씨 색 결정용
-    const _isPendingDark = !isPastMode && colAct>0 && dn(td)>=dn(s.collection_thu) && dn(td)<dn(addDays(s.collection_thu,14));
+    // 진한 배경 카드 미사용 → 항상 밝은 카드용 색상 사용
+    const _isPendingDark = false;
     if(colAct>0||winAct>0){
       // 채집 달성률
       const cDiff=colAct-s.collect_target, cPct=colAct>0?Math.round(colAct/s.collect_target*100):0, cBar=Math.min(cPct,100);
@@ -1674,19 +1674,17 @@ function renderPlan(mode){
 
     let accentColor='#0a5f6e';
     if(isPendingWinter && !isPastMode){
-      // 채집 후 월동 전 - 홈 배너와 동일 색상
-      const daysToWin = Math.round((dn(addDays(s.collection_thu,14))-dn(td))/DAY);
-      if(daysFromCollect===0){       cardBgColor='#0a5f6e'; cardBorder='2px solid rgba(255,255,255,.3)'; cardShadow='0 4px 16px rgba(10,95,110,.3)'; cardLabel='D-day';}
-      else if(daysFromCollect<=7){   cardBgColor='#1a6e50'; cardBorder='1.5px solid rgba(255,255,255,.2)'; cardShadow='none'; cardLabel=`D+${daysFromCollect}`;}
-      else {                         cardBgColor='#1e7e34'; cardBorder='1.5px solid rgba(255,255,255,.2)'; cardShadow='none'; cardLabel=`D+${daysFromCollect}`;}
-      cardTextColor='#fff'; cardSubColor='rgba(255,255,255,.85)';
-      boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
-      accentColor='rgba(255,255,255,.3)';
+      // 채집 후 월동 전 - 연한 배경 + 청록 강조 (진한 카드 사용 안 함)
+      cardBgColor='#fff'; cardTextColor='#1a1610'; cardSubColor='var(--sub)';
+      boxBg='#f5f0e8'; boxBg2='#eaf0f8';
+      cardShadow='0 2px 10px rgba(10,95,110,.12)';
+      cardLabel = daysFromCollect===0?'D-day':`D+${daysFromCollect}`;
+      accentColor='#0a5f6e';
     } else if(isThisWeek && !isPastMode){
-      cardBgColor='#0a5f6e'; cardTextColor='#fff'; cardSubColor='rgba(255,255,255,.85)';
-      boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
-      cardBorder='2px solid rgba(255,255,255,.3)'; cardShadow='0 4px 16px rgba(10,95,110,.3)'; cardLabel='D-day';
-      accentColor='rgba(255,255,255,.3)';
+      cardBgColor='#fff'; cardTextColor='#1a1610'; cardSubColor='var(--sub)';
+      boxBg='#f5f0e8'; boxBg2='#eaf0f8';
+      cardShadow='0 2px 10px rgba(10,95,110,.12)'; cardLabel='D-day';
+      accentColor='#0a5f6e';
     } else if(isPast || isPastMode){
       cardBgColor='#faf6ef'; cardTextColor='#1a1610'; cardSubColor='var(--sub)';
       boxBg='#f5f0e8'; boxBg2='#eaf0f8';
@@ -1715,30 +1713,25 @@ function renderPlan(mode){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
         <div style="background:${boxBg};border-radius:9px;padding:7px 9px;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:${(isPendingWinter||isThisWeek)&&!isPastMode?'#fff':'var(--G)'};">${comma(s.collect_target)}</div>
+          <div style="font-size:18px;font-weight:900;color:var(--G);">${comma(s.collect_target)}</div>
           <div style="font-size:12px;color:${cardSubColor};margin-top:2px;font-weight:700;">채집 권장수량</div>
         </div>
         <div style="background:${boxBg2};border-radius:9px;padding:7px 9px;text-align:center;">
-          <div style="font-size:18px;font-weight:900;color:${(isPendingWinter||isThisWeek)&&!isPastMode?'#fff':'var(--B)'};">${comma(s.wintering_target)}</div>
+          <div style="font-size:18px;font-weight:900;color:var(--B);">${comma(s.wintering_target)}</div>
           <div style="font-size:12px;color:${cardSubColor};margin-top:2px;font-weight:700;">월동 권장수량</div>
         </div>
       </div>
       ${progHtml}
       <div style="display:flex;gap:3px;align-items:center;flex-wrap:wrap;margin-top:6px;">
-        ${(isPendingWinter && !isPastMode)
-          ? `<div style="background:rgba(255,255,255,.18);border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:#fff;-webkit-text-fill-color:#fff;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
-             <span style="font-size:11px;color:rgba(255,255,255,.7);">→</span>
-             <div style="background:rgba(255,255,255,.35);border-radius:6px;padding:3px 7px;font-size:11px;font-weight:900;color:#fff;-webkit-text-fill-color:#fff;border:1.5px solid rgba(255,255,255,.6);">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>`
-          : `<div style="background:${isPast?'rgba(0,0,0,.06)':boxBg};border-radius:6px;padding:3px 7px;font-size:11px;font-weight:900;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};border:${isThisWeek?'1.5px solid rgba(255,255,255,.5)':'1px solid #d0ccc0'};">🐝 채집 ${fmtKo(s.collection_thu)}</div>
-             <span style="font-size:10px;color:${cardSubColor};">→</span>
-             <div style="background:${boxBg2};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>`
-        }
+        <div style="background:${isPast?'rgba(0,0,0,.06)':boxBg};border-radius:6px;padding:3px 7px;font-size:11px;font-weight:900;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};border:1px solid #d0ccc0;">🐝 채집 ${fmtKo(s.collection_thu)}</div>
         <span style="font-size:10px;color:${cardSubColor};">→</span>
-        <div style="background:${(isPendingWinter||isThisWeek)&&!isPastMode?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">해제 ${fmtKo(s.release_fri)}</div>
+        <div style="background:${boxBg2};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">🌡 월동 ${fmtKo(addDays(s.collection_thu,14))}</div>
         <span style="font-size:10px;color:${cardSubColor};">→</span>
-        <div style="background:${(isPendingWinter||isThisWeek)&&!isPastMode?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <div style="background:${isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">해제 ${fmtKo(s.release_fri)}</div>
         <span style="font-size:10px;color:${cardSubColor};">→</span>
-        <div style="background:${(isPendingWinter||isThisWeek)&&!isPastMode?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">사육 ${fmtKo(breedDate(s.planting_mon))} · ${comma(breedQty(s.planting_qty))}</div>
+        <div style="background:${isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <span style="font-size:10px;color:${cardSubColor};">→</span>
+        <div style="background:${isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">사육 ${fmtKo(breedDate(s.planting_mon))} · ${comma(breedQty(s.planting_qty))}</div>
         <span style="font-size:10px;color:${cardSubColor};">→</span>
         <div style="background:${isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">💰 판매 ${fmtKo(saleDate(s.planting_mon))} · ${comma(saleQty(s.planting_qty))}</div>
       </div>
