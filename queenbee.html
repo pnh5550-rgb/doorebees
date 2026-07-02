@@ -2445,7 +2445,7 @@ function showInput(which){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function goTab(id){
+function goTab(id, restoreView){
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
   document.getElementById('pg-'+id).classList.add('on');
@@ -2454,15 +2454,17 @@ function goTab(id){
   if(id==='home') renderHome();
   if(id==='stock') renderStock();
   if(id==='plan'){
-    _planView='main'; _planFilter=defaultYear('future');
+    let pv='main'; if(restoreView){ try{ pv=sessionStorage.getItem('qbSessPlanView')||'main'; }catch(e){} }
+    _planView=pv; _planFilter=defaultYear('future');
     const pm=document.getElementById('pv-main'), pp=document.getElementById('pv-plant');
-    if(pm) pm.classList.add('on'); if(pp) pp.classList.remove('on');
+    if(pm) pm.classList.toggle('on', pv==='main'); if(pp) pp.classList.toggle('on', pv==='plant');
     renderPlan('future');
   }
   if(id==='result'){
-    _resultView='main'; _resultFilter=defaultYear('past');
+    let rv='main'; if(restoreView){ try{ rv=sessionStorage.getItem('qbSessResultView')||'main'; }catch(e){} }
+    _resultView=rv; _resultFilter=defaultYear('past');
     const rm=document.getElementById('rv-main'), rp=document.getElementById('rv-plant');
-    if(rm) rm.classList.add('on'); if(rp) rp.classList.remove('on');
+    if(rm) rm.classList.toggle('on', rv==='main'); if(rp) rp.classList.toggle('on', rv==='plant');
     renderResult();
   }
   if(id==='cfg'){ applySettings(); renderEditList(); renderUpdYear(); }
@@ -2785,19 +2787,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   let sessTab=null;
   try{ sessTab=sessionStorage.getItem('qbSessTab'); }catch(e){}
   if(sessTab && sessTab!=='home'){
-    // 월동해제/산란 뷰 상태 먼저 복원
-    try{
-      const pv=sessionStorage.getItem('qbSessPlanView');
-      const rv=sessionStorage.getItem('qbSessResultView');
-      if(pv) _planView=pv;
-      if(rv) _resultView=rv;
-    }catch(e){}
-    goTab(sessTab);
-    // goTab이 main으로 초기화하므로, 저장된 뷰로 다시 전환
-    try{
-      if(sessTab==='plan'){ const pv=sessionStorage.getItem('qbSessPlanView'); if(pv==='plant') setPlanView('plant'); }
-      if(sessTab==='result'){ const rv=sessionStorage.getItem('qbSessResultView'); if(rv==='plant') setResultView('plant'); }
-    }catch(e){}
+    goTab(sessTab, true);  // 복원 모드: 저장된 하위 뷰(main/plant)까지 복원
   }
 });
 </script>
