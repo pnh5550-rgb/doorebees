@@ -1581,9 +1581,10 @@ function renderPlan(mode){
   if(!curFilter){ curFilter = defaultYear(mode); if(isPastMode) _resultFilter=curFilter; else _planFilter=curFilter; }
   const _td2=today();
   // 이 탭(모드)에 해당하는 SCHED만 추출 (실적=과거, 계획표=미래)
+  // 실적/계획표 분류 기준: 월동입고일(채집+14)이 지났으면 실적, 아니면 계획표
   const modeData = isPastMode
-    ? SCHED.filter(s=>s.collection_thu<_td2)
-    : SCHED.filter(s=>s.collection_thu>=_td2);
+    ? SCHED.filter(s=>addDays(s.collection_thu,14)<_td2)
+    : SCHED.filter(s=>addDays(s.collection_thu,14)>=_td2);
   // 연도 필터는 이 탭에 실제 데이터가 있는 연도만 표시
   const ySet2=new Set(modeData.map(s=>s.collection_thu.slice(0,4)));
   // 실적=최근 먼저(내림차순), 계획표=가까운 미래 먼저(오름차순)
@@ -1707,9 +1708,8 @@ function renderPlan(mode){
           <div style="font-size:12px;font-weight:800;color:${cardSubColor};margin-bottom:3px;">${(()=>{const dc=Math.round((dn(s.collection_thu)-dn(td))/DAY);return dc>0?`D-${dc}`:dc===0?'D-day':`D+${Math.abs(dc)}`;})()}</div>
           <div style="font-size:16px;font-weight:900;color:${cardTextColor};">${fmtKo(s.collection_thu)} 채집</div>
         </div>
-        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
-          ${badge}
-          <div style="font-size:12px;font-weight:800;color:${cardSubColor};">${(()=>{const dw=Math.round((dn(addDays(s.collection_thu,14))-dn(td))/DAY);return dw>0?`D-${dw}`:dw===0?'D-day':`D+${Math.abs(dw)}`;})()}</div>
+        <div style="text-align:right;">
+          <div style="font-size:12px;font-weight:800;color:${cardSubColor};margin-bottom:3px;">${(()=>{const dw=Math.round((dn(addDays(s.collection_thu,14))-dn(td))/DAY);return dw>0?`D-${dw}`:dw===0?'D-day':`D+${Math.abs(dw)}`;})()}</div>
           <div style="font-size:16px;font-weight:900;color:${cardTextColor};opacity:${isPast?'0.5':'1'};">${fmtKo(addDays(s.collection_thu,14))} 월동</div>
         </div>
       </div>
@@ -1928,8 +1928,8 @@ function renderPlantPlan(){
 function defaultYear(mode){
   const td=today();
   const arr = mode==='past'
-    ? SCHED.filter(s=>s.collection_thu<td).map(s=>s.collection_thu.slice(0,4))
-    : SCHED.filter(s=>s.collection_thu>=td).map(s=>s.collection_thu.slice(0,4));
+    ? SCHED.filter(s=>addDays(s.collection_thu,14)<td).map(s=>s.collection_thu.slice(0,4))
+    : SCHED.filter(s=>addDays(s.collection_thu,14)>=td).map(s=>s.collection_thu.slice(0,4));
   if(!arr.length) return 'all';
   const years=[...new Set(arr)].sort();
   // 실적: 가장 최근(큰) 연도, 계획표: 가장 가까운(작은) 연도
