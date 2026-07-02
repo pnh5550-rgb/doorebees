@@ -81,10 +81,10 @@ body{padding-bottom:calc(var(--nav-h) + 8px);}
 .twb-pinfo{font-size:12px;opacity:.85;display:flex;justify-content:space-between;}
 
 /* ── 사이클 카드 ── */
-.cyc{background:var(--card);border:1px solid #e8e2d6;border-left:5px solid #0a5f6e;border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;}
-.cyc.near{border-color:#e8e2d6;border-left-color:#c8b89a;background:#ede8df;}
-.cyc.warn{border-color:#f0d8d0;border-left-color:#e0785a;background:var(--RL);}
-.cyc.soon{border-color:#f0e2c8;border-left-color:#e8a94a;background:var(--AL);}
+.cyc{background:var(--card);border:1.5px solid #0a5f6e;border-left:5px solid #0a5f6e;border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;}
+.cyc.near{background:#e8f0f0;}
+.cyc.warn{background:#e8f0f0;}
+.cyc.soon{background:#e8f0f0;}
 .cyc.done{opacity:.55;}
 .cyc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px;}
 .cyc-date{font-size:17px;font-weight:800;}
@@ -1301,9 +1301,9 @@ function renderHome(){
     const winterDate=addDays(s.collection_thu,14);
     const daysToWinter=Math.round((dn(winterDate)-dn(td))/DAY);
     const winterStatus=daysToWinter>0?`D-${daysToWinter}`:daysToWinter===0?'D-day':'월동완료';
-    // 이번주 강조: 밝은 골드 띠(배경에 잘 보임), 나머지도 골드 띠로 통일
-    const accentBar = idx===0 ? '#ffd54a' : 'rgba(255,213,74,.75)';
-    const borderStyle=`border:1px solid rgba(255,255,255,.25);border-left:5px solid ${accentBar};`;
+    // 배경보다 살짝 밝은 반투명 톤으로 은은하게 (계획표 진한 카드와 동일)
+    const accentBar = idx===0 ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.28)';
+    const borderStyle=`border:1.5px solid ${accentBar};border-left:5px solid ${accentBar};`;
 
     bannersHtml+=`<div style="background:linear-gradient(135deg,${st.gc1} 0%,${st.gc2} 100%);${borderStyle}color:${st.text};border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;${idx===0?'box-shadow:0 4px 16px rgba(10,95,110,.3);':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
@@ -1668,12 +1668,12 @@ function renderPlan(mode){
       else {                         cardBgColor='#1e7e34'; cardBorder='1.5px solid rgba(255,255,255,.2)'; cardShadow='none'; cardLabel=`D+${daysFromCollect}`;}
       cardTextColor='#fff'; cardSubColor='rgba(255,255,255,.85)';
       boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
-      accentColor='rgba(255,255,255,.55)';
+      accentColor='rgba(255,255,255,.3)';
     } else if(isThisWeek && !isPastMode){
       cardBgColor='#0a5f6e'; cardTextColor='#fff'; cardSubColor='rgba(255,255,255,.85)';
       boxBg='rgba(255,255,255,.18)'; boxBg2='rgba(255,255,255,.18)';
       cardBorder='2px solid rgba(255,255,255,.3)'; cardShadow='0 4px 16px rgba(10,95,110,.3)'; cardLabel='D-day';
-      accentColor='rgba(255,255,255,.55)';
+      accentColor='rgba(255,255,255,.3)';
     } else if(isPast || isPastMode){
       cardBgColor='#faf6ef'; cardTextColor='#1a1610'; cardSubColor='var(--sub)';
       boxBg='#f5f0e8'; boxBg2='#eaf0f8';
@@ -1689,7 +1689,7 @@ function renderPlan(mode){
       accentColor='#0a5f6e';
     }
 
-    html+=`<div style="border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;background:${cardBgColor};border:1px solid #e8e2d6;border-left:5px solid ${accentColor};box-shadow:${cardShadow};">
+    html+=`<div style="border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;background:${cardBgColor};border:1.5px solid ${accentColor};border-left:5px solid ${accentColor};box-shadow:${cardShadow};">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
         <div>
           <div style="font-size:12px;font-weight:800;color:${cardSubColor};margin-bottom:3px;">${(()=>{const dc=Math.round((dn(s.collection_thu)-dn(td))/DAY);return dc>0?`D-${dc}`:dc===0?'D-day':`D+${Math.abs(dc)}`;})()}</div>
@@ -1782,7 +1782,7 @@ function renderPlantResult(){
     const cardBg='#faf6ef', accentColor='#c9a961';
     const boxBg='#eaf0f8', boxBg2='#f1f7e8';  // 해제=블루톤, 산란=그린톤
     const subC='var(--sub)';
-    html+=`<div style="border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;background:${cardBg};border:1px solid #e8e2d6;border-left:5px solid ${accentColor};box-shadow:none;">
+    html+=`<div style="border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;background:${cardBg};border:1.5px solid ${accentColor};border-left:5px solid ${accentColor};box-shadow:none;">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
         <div>
           <div style="font-size:12px;font-weight:800;color:${subC};margin-bottom:3px;">완료</div>
@@ -1871,7 +1871,7 @@ function renderPlantPlan(){
     const dRelL=dRel>0?`D-${dRel}`:dRel===0?'D-day':`D+${Math.abs(dRel)}`;
     const dPl=Math.round((dn(s.planting_mon)-dn(td))/DAY);
     const dPlL=dPl>0?`D-${dPl}`:dPl===0?'D-day':`D+${Math.abs(dPl)}`;
-    html+=`<div style="border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;background:#fff;border:1px solid #e8e2d6;border-left:5px solid #1a5fa0;box-shadow:none;">
+    html+=`<div style="border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;background:#fff;border:1.5px solid #1a5fa0;border-left:5px solid #1a5fa0;box-shadow:none;">
       <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;">
         <div>
           <div style="font-size:12px;font-weight:800;color:#1a5fa0;margin-bottom:3px;">${dRelL}</div>
