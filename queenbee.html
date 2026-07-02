@@ -797,6 +797,14 @@ function addDays(s,n){
 }
 function fmtKo(s){ if(!s)return'-'; const d=new Date(s+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}(${KO[d.getDay()]})`; }
 function comma(n){ return Math.round(n).toLocaleString(); }
+// 산란(월)로부터 사육 이동일(4주차 화요일) = 산란 + 29일
+function breedDate(plantingMon){ return addDays(plantingMon, 29); }
+// 사육 수량 = 산란 × 43% (CFG.saleRate)
+function breedQty(plantingQty){ return Math.round(plantingQty * (CFG.saleRate||43) / 100); }
+// 판매 수량 = 사육 × 85% (CFG.sellRate)
+function saleQty(plantingQty){ return Math.round(breedQty(plantingQty) * (CFG.sellRate||85) / 100); }
+// 판매일 = 산란 + 70일 (기존 유지)
+function saleDate(plantingMon){ return addDays(plantingMon, 70); }
 
 // 배치 잔량 계산
 function batchRemain(bid){
@@ -1351,7 +1359,9 @@ function renderHome(){
         <span style="font-size:10px;color:${st.sub};">→</span>
         <div style="background:${st.box};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
         <span style="font-size:10px;color:${st.sub};">→</span>
-        <div style="background:${st.box};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">💰 판매 ${fmtKo(addDays(s.planting_mon,70))}</div>
+        <div style="background:${st.box};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">사육 ${fmtKo(breedDate(s.planting_mon))} · ${comma(breedQty(s.planting_qty))}</div>
+        <span style="font-size:10px;color:${st.sub};">→</span>
+        <div style="background:${st.box};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${st.text};-webkit-text-fill-color:${st.text};">💰 판매 ${fmtKo(saleDate(s.planting_mon))} · ${comma(saleQty(s.planting_qty))}</div>
       </div>
     </div>`;
   });
@@ -1379,11 +1389,13 @@ function renderHome(){
         ${badge}
       </div>
       <div class="flow">
-        <div class="flow-box fb-a">월동해제 ${fmtKo(s.release_fri)}</div>
+        <div class="flow-box fb-a">해제 ${fmtKo(s.release_fri)}</div>
         <span class="flow-arr">→</span>
-        <div class="flow-box fb-b">산란세팅 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
+        <div class="flow-box fb-b">산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
         <span class="flow-arr">→</span>
-        <div class="flow-box fb-sale">💰 판매 ${fmtKo(addDays(s.planting_mon,70))} · ${comma(Math.round(s.planting_qty*(CFG.saleRate||43)/100))}</div>
+        <div class="flow-box fb-b">사육 ${fmtKo(breedDate(s.planting_mon))} · ${comma(breedQty(s.planting_qty))}</div>
+        <span class="flow-arr">→</span>
+        <div class="flow-box fb-sale">💰 판매 ${fmtKo(saleDate(s.planting_mon))} · ${comma(saleQty(s.planting_qty))}</div>
       </div>
     </div>`;
   });
@@ -1726,7 +1738,9 @@ function renderPlan(mode){
         <span style="font-size:10px;color:${cardSubColor};">→</span>
         <div style="background:${(isPendingWinter||isThisWeek)&&!isPastMode?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
         <span style="font-size:10px;color:${cardSubColor};">→</span>
-        <div style="background:${isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">💰 판매 ${fmtKo(addDays(s.planting_mon,70))} · ${comma(Math.round(s.planting_qty*(CFG.saleRate||43)/100))}</div>
+        <div style="background:${(isPendingWinter||isThisWeek)&&!isPastMode?'rgba(255,255,255,.18)':isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">사육 ${fmtKo(breedDate(s.planting_mon))} · ${comma(breedQty(s.planting_qty))}</div>
+        <span style="font-size:10px;color:${cardSubColor};">→</span>
+        <div style="background:${isPast?'rgba(0,0,0,.04)':boxBg};border-radius:6px;padding:3px 6px;font-size:11px;font-weight:700;color:${cardTextColor};-webkit-text-fill-color:${cardTextColor};">💰 판매 ${fmtKo(saleDate(s.planting_mon))} · ${comma(saleQty(s.planting_qty))}</div>
       </div>
     </div>`;
   });
@@ -1822,7 +1836,9 @@ function renderPlantResult(){
         <span style="font-size:9px;color:var(--muted);">→</span>
         <div style="background:#f1f7e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:900;color:#3a5a1a;-webkit-text-fill-color:#3a5a1a;border:1px solid #c5e0a0;">🌱 산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
         <span style="font-size:9px;color:var(--muted);">→</span>
-        <div style="background:#f5f0e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#6b5430;-webkit-text-fill-color:#6b5430;">💰 판매 ${fmtKo(addDays(s.planting_mon,70))} · ${comma(Math.round(s.planting_qty*(CFG.saleRate||43)/100))}</div>
+        <div style="background:#eef2f7;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#3a4a6a;-webkit-text-fill-color:#3a4a6a;">사육 ${fmtKo(breedDate(s.planting_mon))} · ${comma(breedQty(s.planting_qty))}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#f5f0e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#6b5430;-webkit-text-fill-color:#6b5430;">💰 판매 ${fmtKo(saleDate(s.planting_mon))} · ${comma(saleQty(s.planting_qty))}</div>
       </div>
     </div>`;
   });
@@ -1901,7 +1917,9 @@ function renderPlantPlan(){
         <span style="font-size:9px;color:var(--muted);">→</span>
         <div style="background:#f1f7e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:900;color:#3a5a1a;-webkit-text-fill-color:#3a5a1a;border:1px solid #c5e0a0;">🌱 산란 ${fmtKo(s.planting_mon)} · ${comma(s.planting_qty)}</div>
         <span style="font-size:9px;color:var(--muted);">→</span>
-        <div style="background:#f5f0e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#6b5430;-webkit-text-fill-color:#6b5430;">💰 판매 ${fmtKo(addDays(s.planting_mon,70))} · ${comma(Math.round(s.planting_qty*(CFG.saleRate||43)/100))}</div>
+        <div style="background:#eef2f7;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#3a4a6a;-webkit-text-fill-color:#3a4a6a;">사육 ${fmtKo(breedDate(s.planting_mon))} · ${comma(breedQty(s.planting_qty))}</div>
+        <span style="font-size:9px;color:var(--muted);">→</span>
+        <div style="background:#f5f0e8;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;color:#6b5430;-webkit-text-fill-color:#6b5430;">💰 판매 ${fmtKo(saleDate(s.planting_mon))} · ${comma(saleQty(s.planting_qty))}</div>
       </div>
     </div>`;
   });
@@ -1921,7 +1939,7 @@ function defaultYear(mode){
 /* ═══════════════════════════════════
    설정
 ═══════════════════════════════════ */
-let CFG = {weeks:11, s1:80, s2:87, saleRate:43};
+let CFG = {weeks:11, s1:80, s2:87, saleRate:43, sellRate:85};
 function loadCfg(){ try{ const s=localStorage.getItem('qbCFG28'); if(s) CFG=JSON.parse(s); }catch(e){} }
 function saveCfg(){
   if(!requireAdmin()) return;
