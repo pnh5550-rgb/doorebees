@@ -364,7 +364,7 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .sbtn:active{transform:translateY(1px) scale(.99);filter:brightness(.96)}
 .sbtn.san{background:linear-gradient(135deg,#1FB257,#16A34A)}.sbtn.sak{background:linear-gradient(135deg,#8B5CF6,var(--sak))}.sbtn:disabled{background:var(--tx3);cursor:not-allowed;box-shadow:none}
 .readonly-box{background:var(--sel-bg);border:1px solid var(--sel);border-radius:var(--rs);padding:9px 12px;margin-bottom:10px;font-size:14px;color:var(--sel-t);display:flex;align-items:center;gap:6px}
-.si{background:var(--sf);border:1px solid #0B5560;border-left:5px solid #0B5560;border-radius:var(--r);padding:14px 15px;margin-bottom:10px;box-shadow:var(--sh);transition:transform .12s}
+.si{background:var(--sf);border:1px solid #0E7490;border-left:5px solid #0E7490;border-radius:var(--r);padding:14px 15px;margin-bottom:10px;box-shadow:var(--sh);transition:transform .12s}
 .si:active{transform:scale(.99)}
 .si.sak-si{border-left:3px solid var(--sak)}
 .si-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px}
@@ -471,9 +471,9 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 /* 추가 컴포넌트 CSS */
 .room-layout{display:flex;flex-direction:column;gap:10px;margin-bottom:4px}
 .room-sub{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.rc{background:var(--sf);border:1px solid #0B5560;border-left:6px solid #0B5560;border-radius:var(--r);padding:13px 15px;box-shadow:var(--sh);transition:transform .12s,box-shadow .12s}
+.rc{background:var(--sf);border:1px solid #0E7490;border-left:6px solid #0E7490;border-radius:var(--r);padding:13px 15px;box-shadow:var(--sh);transition:transform .12s,box-shadow .12s}
 .rc:active{transform:scale(.985)}
-.rc-na{border-color:#16A34A;border-left-color:#16A34A}
+.rc-na{border-color:#15803D;border-left-color:#15803D}
 .rc-big{padding:16px 18px}
 .san-rc{}
 .rc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
@@ -629,7 +629,7 @@ function SanCard({room,st,big}){
       </div>
       <div className="bar-bg"><div className={`bar-fill bar-${c}`} style={{width:`${Math.min(100,pct)}%`}}/></div>
       <div className="rc-stats">
-        <div style={{textAlign:'left'}}><div className="rc-sl">현재세팅</div><b className="rc-sv sv-occ" style={room.startsWith('나')?{color:'#16A34A'}:{color:'#0B5560'}}>{fmt(st.occ)}</b></div>
+        <div style={{textAlign:'left'}}><div className="rc-sl">현재세팅</div><b className="rc-sv sv-occ" style={room.startsWith('나')?{color:'#15803D'}:{color:'#0E7490'}}>{fmt(st.occ)}</b></div>
         <div style={{textAlign:'left'}}><div className="rc-sl">여유</div><b className={`rc-sv${st.avail<200?' sv-low':''}`}>{fmt(st.avail)}</b></div>
       </div>
       <div style={{marginTop:6,fontSize:13,color:'var(--tx3)',fontWeight:700,textAlign:'right'}}>총 {fmt(st.cap)}</div>
@@ -740,7 +740,7 @@ function SanBatchView({entries,year}){
     const pegR=g.san>0?Math.round(peg/g.san*100):0;
     const done=addDays(g.date,42)<td;
     return(
-      <div key={i} style={{background:'var(--sf)',border:`1px solid ${g.merged?'#16A34A':'#0B5560'}`,borderLeft:`5px solid ${g.merged?'#16A34A':'#0B5560'}`,borderRadius:'var(--r)',padding:'12px 13px',marginBottom:9,boxShadow:'var(--sh)'}}>
+      <div key={i} style={{background:'var(--sf)',border:`1px solid ${g.merged?'#15803D':'#0E7490'}`,borderLeft:`5px solid ${g.merged?'#15803D':'#0E7490'}`,borderRadius:'var(--r)',padding:'12px 13px',marginBottom:9,boxShadow:'var(--sh)'}}>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:9}}>
           <div>
             <span style={{fontSize:16,fontWeight:800,color:g.merged?'var(--sak-t)':'var(--san-t)'}}>{g.room}</span>
@@ -802,7 +802,7 @@ function BatchRates({entries,year}){
           const srTxt=sr===null?(done?'—':'대기'):sr+'%';
           const roomList=g.room.split('+');
           return(
-            <div key={i} style={{display:'flex',alignItems:'center',gap:9,border:`1px solid ${g.merged?'#16A34A':'#0B5560'}`,borderLeft:`5px solid ${g.merged?'#16A34A':'#0B5560'}`,borderRadius:12,padding:'11px 11px',background:'var(--sf)',boxShadow:'var(--sh)'}}>
+            <div key={i} style={{display:'flex',alignItems:'center',gap:9,border:`1px solid ${g.merged?'#15803D':'#0E7490'}`,borderLeft:`5px solid ${g.merged?'#15803D':'#0E7490'}`,borderRadius:12,padding:'11px 11px',background:'var(--sf)',boxShadow:'var(--sh)'}}>
               {/* 날짜+룸(세로) */}
               <div style={{minWidth:50,flexShrink:0}}>
                 <div style={{fontSize:12,color:'var(--tx3)',fontWeight:700}}>{fmtYr(g.date)}</div>
