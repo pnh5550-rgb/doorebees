@@ -1899,11 +1899,22 @@ function renderPlantPlan(){
     const relPct=relAct>0?Math.round(relAct/s.wintering_target*100):0;
     const relBar=Math.min(relPct,100);
     const relPctC=relPct>=100?'#0a7a5a':(relPct>=90?'#e8890c':'#c0392b');
+    // 실제 산란량 (산란일 ±4일) - 예정 뷰라 대개 0이지만 정확히 집계
+    const plActP=DB.events.filter(e=>e.type==='plant'&&Math.abs(dn(e.date)-dn(s.planting_mon))<=4*DAY).reduce((a,e)=>a+e.qty,0);
+    const plPctP=plActP>0?Math.round(plActP/s.planting_qty*100):0;
+    const plBarP=Math.min(plPctP,100);
+    const plPctCP=plPctP>=100?'#0a7a5a':(plPctP>=90?'#e8890c':'#c0392b');
     let relProgHtml='';
     if(relAct>0){
-      relProgHtml=`<div style="margin:8px 0 0;">
-        <div style="background:#e4ecf3;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${relBar}%;background:${relPctC};border-radius:5px;"></div></div>
-        <div style="font-size:13px;font-weight:800;color:#1a3a5d;display:flex;justify-content:space-between;"><span>월동해제 ${comma(relAct)}/${comma(s.wintering_target)}</span><span style="color:${relPctC};">${relPct}%</span></div>
+      relProgHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;">
+        <div>
+          <div style="background:#e4ecf3;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${relBar}%;background:${relPctC};border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:#1a3a5d;display:flex;justify-content:space-between;"><span>해제 ${comma(relAct)}/${comma(s.wintering_target)}</span><span style="color:${relPctC};">${relPct}%</span></div>
+        </div>
+        <div>
+          <div style="background:#eef3e6;border-radius:5px;height:7px;overflow:hidden;margin-bottom:4px;"><div style="height:100%;width:${plBarP}%;background:${plActP>0?plPctCP:'#ccc'};border-radius:5px;"></div></div>
+          <div style="font-size:13px;font-weight:800;color:#3a5a1a;display:flex;justify-content:space-between;"><span>산란 ${comma(plActP)}/${comma(s.planting_qty)}</span><span style="color:${plActP>0?plPctCP:'var(--muted)'};">${plActP>0?plPctP+'%':'-'}</span></div>
+        </div>
       </div>`;
     }
     html+=`<div style="border-radius:12px;padding:14px 16px 14px 17px;margin-bottom:10px;background:#fff;border:1.5px solid #1a5fa0;border-left:5px solid #1a5fa0;box-shadow:none;">
