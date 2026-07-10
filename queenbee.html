@@ -821,7 +821,7 @@ function progColor(pct, hasData){
 
 // 배치 잔량 계산
 function batchRemain(bid){
-  // 새 로직: b.wintered가 이미 현재 잔량 (월동입고+/월동해제-로 실시간 반영됨)
+  // b.wintered가 현재 잔량 (월동입고+/월동해제-로 실시간 반영)
   const b = DB.batches.find(x=>x.id===bid);
   if(!b) return 0;
   return Math.max(0, b.wintered||0);
@@ -1172,6 +1172,15 @@ function saveRel(){
   if(!date||!qty||qty<1){ toast('날짜와 수량을 입력하세요.',false); return; }
   // 배치 선택은 선택사항. 선택하면 그 배치에서, 안 하면 전체 재고에서 차감
   const bid = _relBatch || '';
+  // 배치 잔량 초과 시 경고 (초과분은 소실되어 나중에 복원 불가 → 사전 확인)
+  if(bid){
+    const _b=DB.batches.find(x=>x.id===bid);
+    const _rem=_b?Math.max(0,_b.wintered||0):0;
+    if(qty>_rem){
+      const ok=confirm(`⚠️ 선택한 배치의 잔량(${comma(_rem)}마리)보다 해제 수량(${comma(qty)}마리)이 많습니다.\n\n초과분 ${comma(qty-_rem)}마리는 재고에 반영되지 않습니다.\n\n그래도 저장할까요?`);
+      if(!ok) return;
+    }
+  }
   DB.events.push({id:'e'+Date.now(),type:'rel',date,qty,batch_id:bid,note});
   // 월동해제 → 재고 차감
   if(bid){
@@ -2103,7 +2112,17 @@ function saveEditModal(){
     // 월동해제 수정: 늘면 추가 차감, 줄면 복원
     if(e.batch_id){
       const b=DB.batches.find(x=>x.id===e.batch_id);
-      if(b){ b.wintered=Math.max(0,(b.wintered||0)-diff); }
+      if(b){
+        // 차감량(diff>0)이 현재 잔량을 넘으면 초과분이 소실되므로 사전 경고
+        if(diff>0){
+          const _rem=Math.max(0,b.wintered||0);
+          if(diff>_rem){
+            const ok=confirm(`⚠️ 배치 잔량(${comma(_rem)}마리)보다 추가 차감량(${comma(diff)}마리)이 많습니다.\n\n초과분은 재고에 반영되지 않습니다.\n\n그래도 수정할까요?`);
+            if(!ok) return;
+          }
+        }
+        b.wintered=Math.max(0,(b.wintered||0)-diff);
+      }
     } else {
       if(diff>0) deductStock(diff);
       else if(diff<0) restoreStock(-diff);
