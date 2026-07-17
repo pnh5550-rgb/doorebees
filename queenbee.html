@@ -1123,7 +1123,9 @@ function saveCol(){
   if(!date||!qty||qty<1){ toast('날짜와 수량을 입력하세요.',false); return; }
 
   // 배치 키 = 채집일. 채집은 재고(wintered)에 영향 없음. collect_qty만 기록
-  let batch=DB.batches.find(b=>b.col_date===date);
+  // 월동입고 배치(winterIn)는 같은 날짜여도 별개이므로 제외하고 찾는다.
+  // (제외하지 않으면 같은 날 월동입고가 있을 때 채집수량이 그 배치에 붙어 실적/진행바에서 누락됨)
+  let batch=DB.batches.find(b=>b.col_date===date && !b.winterIn);
   if(batch){
     batch.collect_qty=qty; if(note) batch.note=note;
   } else {
