@@ -1161,18 +1161,24 @@ function App(){
                     })()}
                   </div>
                   <div className="si-dates">
-                    <div className={`si-db${s.done1?' si-cell-done':''}`}>
+                    <div className={`si-db${(s.done1||s.q1>0||s.p1>0)?' si-cell-done':''}`}>
                       <div className="si-dl">① 1차 선별 (화)</div>
                       <div className="si-dv">{fmtDate(s.s1)}</div>
-                      {s.done1
-                        ?<div className="si-qty">{s.q1>0&&<span style={{color:'var(--sel-t)'}}>선별 {fmt(s.q1)}</span>}{s.q1>0&&s.p1>0&&<span style={{color:'var(--tx3)'}}> · </span>}{s.p1>0&&<span style={{color:'var(--rd-t)'}}>폐기 {fmt(s.p1)}</span>}{s.q1===0&&s.p1===0&&<span style={{color:'var(--tx3)'}}>—</span>}</div>
+                      {(s.done1||s.q1>0||s.p1>0)
+                        ?<>
+                          <div className="si-qty">{s.q1>0&&<span style={{color:'var(--sel-t)'}}>선별 {fmt(s.q1)}</span>}{s.q1>0&&s.p1>0&&<span style={{color:'var(--tx3)'}}> · </span>}{s.p1>0&&<span style={{color:'var(--rd-t)'}}>폐기 {fmt(s.p1)}</span>}{s.q1===0&&s.p1===0&&<span style={{color:'var(--tx3)'}}>—</span>}</div>
+                          {!s.done1&&<div className={`si-dd ${d1.cls}`} style={{marginTop:2}}>{d1.txt}</div>}
+                        </>
                         :<div className={`si-dd ${d1.cls}`}>{d1.txt}</div>}
                     </div>
-                    <div className={`si-db${s.done2?' si-cell-done':''}`}>
+                    <div className={`si-db${(s.done2||s.q2>0||s.p2>0)?' si-cell-done':''}`}>
                       <div className="si-dl">② 2차 선별 (금)</div>
                       <div className="si-dv">{fmtDate(s.s2)}</div>
-                      {s.done2
-                        ?<div className="si-qty">{s.q2>0&&<span style={{color:'var(--sel-t)'}}>선별 {fmt(s.q2)}</span>}{s.q2>0&&s.p2>0&&<span style={{color:'var(--tx3)'}}> · </span>}{s.p2>0&&<span style={{color:'var(--rd-t)'}}>폐기 {fmt(s.p2)}</span>}{s.q2===0&&s.p2===0&&<span style={{color:'var(--tx3)'}}>—</span>}</div>
+                      {(s.done2||s.q2>0||s.p2>0)
+                        ?<>
+                          <div className="si-qty">{s.q2>0&&<span style={{color:'var(--sel-t)'}}>선별 {fmt(s.q2)}</span>}{s.q2>0&&s.p2>0&&<span style={{color:'var(--tx3)'}}> · </span>}{s.p2>0&&<span style={{color:'var(--rd-t)'}}>폐기 {fmt(s.p2)}</span>}{s.q2===0&&s.p2===0&&<span style={{color:'var(--tx3)'}}>—</span>}</div>
+                          {!s.done2&&<div className={`si-dd ${d2.cls}`} style={{marginTop:2}}>{d2.txt}</div>}
+                        </>
                         :<div className={`si-dd ${d2.cls}`}>{d2.txt}</div>}
                     </div>
                   </div>
