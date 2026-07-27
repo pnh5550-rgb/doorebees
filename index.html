@@ -209,11 +209,11 @@ window.generateExcel = function(entries) {
   // ── 시트3: 전체 이력 ──
   var ws3=wb.addWorksheet('전체 이력');
   ws3.views=[{showGridLines:false}];
-  [13,10,14,12,11].forEach(function(w,j){ws3.getColumn(j+1).width=w;});
-  ws3.mergeCells('A1:E1'); H(ws3.getCell('A1'),'1B4332','FFFFFF',15); ws3.getCell('A1').value='두레수정벌 산란세팅 전체 이력'; ws3.getRow(1).height=30;
-  ws3.mergeCells('A2:E2'); H(ws3.getCell('A2'),'2D6A4F','FFFFFF',10); ws3.getCell('A2').value='출력일: '+todayDisp+' · 전체 '+entries.length+'건 · (원본구분=백업 복원용 원본 입력값)'; ws3.getRow(2).height=18;
+  [13,10,14,12,11,24].forEach(function(w,j){ws3.getColumn(j+1).width=w;});
+  ws3.mergeCells('A1:F1'); H(ws3.getCell('A1'),'1B4332','FFFFFF',15); ws3.getCell('A1').value='두레수정벌 산란세팅 전체 이력'; ws3.getRow(1).height=30;
+  ws3.mergeCells('A2:F2'); H(ws3.getCell('A2'),'2D6A4F','FFFFFF',10); ws3.getCell('A2').value='출력일: '+todayDisp+' · 전체 '+entries.length+'건 · (원본구분=백업 복원용 원본 입력값)'; ws3.getRow(2).height=18;
   ws3.getRow(3).height=6;
-  ['날짜','룸','종류','수량','원본구분'].forEach(function(h,j){
+  ['날짜','룸','종류','수량','원본구분','비고'].forEach(function(h,j){
     var c=ws3.getCell(4,j+1); c.value=h; H(c,'374151','FFFFFF',10); B(c);
   });
   ws3.getRow(4).height=22;
@@ -222,13 +222,13 @@ window.generateExcel = function(entries) {
   var sortedHist=entries.slice().sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);});
   sortedHist.forEach(function(e,i){
     var nt=NT(e.type); var tl=TM[nt]||e.type; var bg=TB[nt]||'FFFFFF';
-    [e.date,e.room,tl,e.amount,e.type].forEach(function(v,j){
-      var c=ws3.getCell(5+i,j+1); c.value=v; D(c,bg,'1E293B',10,j===3,'center'); B(c);
+    [e.date,e.room,tl,e.amount,e.type,e.note||''].forEach(function(v,j){
+      var c=ws3.getCell(5+i,j+1); c.value=v; D(c,bg,'1E293B',10,j===3,j===5?'left':'center'); B(c);
     });
     ws3.getRow(5+i).height=17;
   });
   var totalAmt=entries.reduce(function(a,e){return a+e.amount;},0);
-  ['합 계','',entries.length+'건',totalAmt,''].forEach(function(v,j){
+  ['합 계','',entries.length+'건',totalAmt,'',''].forEach(function(v,j){
     var c=ws3.getCell(5+entries.length,j+1); c.value=v; H(c,'2D6A4F','FFFFFF',10); B(c);
   });
   
@@ -346,6 +346,9 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .ainp{width:100%;padding:14px;border:2px solid var(--bd2);border-radius:var(--rs);font-size:26px;font-weight:800;text-align:center;background:var(--sf);color:var(--tx);outline:none;margin-bottom:11px;font-family:inherit}
 .ainp::placeholder{color:var(--tx3);font-weight:600}
 .ainp:focus{border-color:var(--G);box-shadow:0 0 0 3px rgba(10,95,110,.14)}
+.ninp{width:100%;padding:12px 14px;border:2px solid var(--bd2);border-radius:var(--rs);font-size:15px;font-weight:500;background:var(--sf);color:var(--tx);outline:none;font-family:inherit;resize:vertical;line-height:1.5}
+.ninp::placeholder{color:var(--tx3);font-weight:500}
+.ninp:focus{border-color:var(--G);box-shadow:0 0 0 3px rgba(10,95,110,.14)}
 .dinp{width:100%;padding:12px 14px;border:2px solid var(--bd2);border-radius:var(--rs);font-size:16px;font-weight:700;background:var(--sf);color:var(--tx);outline:none;margin-bottom:12px;font-family:inherit}
 .dinp:focus{border-color:var(--G);box-shadow:0 0 0 3px rgba(10,95,110,.14)}
 .in-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:var(--sh)}
@@ -700,6 +703,7 @@ function EditModal({entry,onSave,onClose}){
   const [room,setRoom]=useState(entry.room);
   const [type,setType]=useState(entry.type);
   const [amount,setAmount]=useState(String(entry.amount));
+  const [note,setNote]=useState(entry.note||'');
   const [err,setErr]=useState('');
   return(
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:999,padding:16}} onClick={onClose}>
@@ -717,10 +721,12 @@ function EditModal({entry,onSave,onClose}){
         ))}</div>
         <label className="lbl">수량</label>
         <input className="ainp" type="number" value={amount} onChange={e=>setAmount(e.target.value)}/>
-        {err&&<div style={{color:'var(--rd-t)',fontSize:15,marginBottom:8}}>{err}</div>}
+        <label className="lbl" style={{marginTop:12}}>비고</label>
+        <textarea className="ninp" rows={2} placeholder="특이사항 (선택)" value={note} onChange={e=>setNote(e.target.value)}/>
+        {err&&<div style={{color:'var(--rd-t)',fontSize:15,marginBottom:8,marginTop:8}}>{err}</div>}
         <div className="modal-btns">
           <button className="mbtn" onClick={onClose}>취소</button>
-          <button className="mbtn p-san" onClick={()=>{if(!amount||Number(amount)<=0){setErr('수량 확인');return;}onSave({...entry,date,room,type,amount:Number(amount)});}}>저장</button>
+          <button className="mbtn p-san" onClick={()=>{if(!amount||Number(amount)<=0){setErr('수량 확인');return;}const d={...entry,date,room,type,amount:Number(amount)};if(note&&note.trim())d.note=note.trim();else delete d.note;onSave(d);}}>저장</button>
         </div>
       </div>
     </div>
@@ -844,7 +850,7 @@ function App(){
   const [hf,setHf]=useState('전체');const[hr,setHr]=useState('');
   const [yr,setYr]=useState('전체');
   const [histView,setHistView]=useState('all');
-  const [form,setForm]=useState({date:today(),room:'가2D',type:'산란',amount:''});
+  const [form,setForm]=useState({date:today(),room:'가2D',type:'산란',amount:'',note:''});
   const [exporting,setExporting]=useState(false);
   const unsubRef=useRef(null);
 
@@ -941,12 +947,13 @@ function App(){
     if(!isAdmin){showToast('관리자 로그인 후 입력 가능');return;}
     if(!form.amount||Number(form.amount)<=0){showToast('수량을 입력해주세요');return;}
     const ne={date:form.date,room:form.room,type:form.type,amount:Number(form.amount)};
+    if(form.note&&form.note.trim())ne.note=form.note.trim();
     try{
       if(fbConn){await fbPush('entries_v2',ne);}
       else{setEntries(prev=>[...prev,{...ne,id:'loc_'+Date.now()}].sort((a,b)=>a.date.localeCompare(b.date)));}
       const label=ne.type==='산란'?'산란세팅':ne.type==='사육'?'사육세팅':'산란폐기';
       showToast(`✓ ${label} ${fmt(ne.amount)} 저장`);
-      setForm(f=>({...f,amount:''}));
+      setForm(f=>({...f,amount:'',note:''}));
     }catch(e){showToast('저장 실패: '+e.message);}
   }
   async function delEntry(id){
@@ -1079,6 +1086,9 @@ function App(){
             <input type="number" className="ainp" placeholder="0" value={form.amount} min={1}
               onChange={e=>setForm(f=>({...f,amount:e.target.value}))}
               onKeyDown={e=>e.key==='Enter'&&isAdmin&&submitEntry()}/>
+            <label className="lbl" style={{marginTop:14}}><i className="ti ti-note"/> 비고 <span className="lbl-hint">특이사항 (선택)</span></label>
+            <textarea className="ninp" placeholder="특이사항이 있으면 입력하세요" rows={2} value={form.note}
+              onChange={e=>setForm(f=>({...f,note:e.target.value}))}/>
           </div>
           {hasPreview&&(()=>{
             const amt=Number(form.amount);
@@ -1292,12 +1302,15 @@ function App(){
             </div>
             <div className="cn">{filtEntries.length}건 표시 (전체 {entries.length}건)</div>
             {filtEntries.map(e=>(
-              <div key={e.id} className="hi">
-                <span className="hi-dt"><span className="hi-yr">{e.date.slice(0,4)}</span><span className="hi-md">{e.date.slice(5).replace('-','/')}</span></span>
-                <span className="hi-rm">{e.room}</span>
-                <span className={`hi-b ${typeBadge(e.type)}`}>{typeLabel(e.type)}</span>
-                <span className="hi-a">{fmt(e.amount)}</span>
-                {isAdmin&&<><button className="edit-btn" onClick={()=>setEditEntry(e)}><i className="ti ti-pencil"/></button><button className="del" onClick={()=>delEntry(e.id)}><i className="ti ti-x"/></button></>}
+              <div key={e.id} className="hi" style={{flexDirection:'column',alignItems:'stretch',gap:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:11}}>
+                  <span className="hi-dt"><span className="hi-yr">{e.date.slice(0,4)}</span><span className="hi-md">{e.date.slice(5).replace('-','/')}</span></span>
+                  <span className="hi-rm">{e.room}</span>
+                  <span className={`hi-b ${typeBadge(e.type)}`}>{typeLabel(e.type)}</span>
+                  <span className="hi-a">{fmt(e.amount)}</span>
+                  {isAdmin&&<><button className="edit-btn" onClick={()=>setEditEntry(e)}><i className="ti ti-pencil"/></button><button className="del" onClick={()=>delEntry(e.id)}><i className="ti ti-x"/></button></>}
+                </div>
+                {e.note&&<div style={{fontSize:13,color:'var(--tx2)',fontWeight:500,marginTop:7,paddingTop:7,borderTop:'1px dashed var(--bd)',lineHeight:1.5}}>📝 {e.note}</div>}
               </div>
             ))}
           </>)}
