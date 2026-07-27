@@ -1166,6 +1166,28 @@ function App(){
                         :<div className={`si-dd ${d2.cls}`}>{d2.txt}</div>}
                     </div>
                   </div>
+                  {(()=>{
+                    const totalSel=s.q1+s.q2;                       // 선별 합
+                    const sellDate=addDays(s.date,70);              // 판매일=산란+70
+                    const sellQty=totalSel>0?Math.round(totalSel*0.85):0; // 판매가능=선별합×85%
+                    const rate=s.rate;                              // 선별율
+                    const rateCol=rate===null?'var(--tx3)':rate<30?'#DC2626':rate<45?'#CA8A04':'#16A34A';
+                    const past=s.done2;                             // 2차 지남 여부
+                    const boxBg=past?'#FBE3E0':'var(--sf2)';        // 지남=선별카드보다 진한 붉은톤 / 아니면 회색
+                    const boxBd='#A78BDA';                          // 판매카드는 보라 테두리로 구별
+                    return(
+                      <div style={{marginTop:8,background:boxBg,border:`1.5px solid ${boxBd}`,borderRadius:'var(--rs)',padding:'11px 13px',display:'flex',justifyContent:'space-between',alignItems:'center',gap:10}}>
+                        <div style={{fontSize:14.5,fontWeight:700,color:'var(--tx2)'}}>
+                          {totalSel>0
+                            ?<>선별 <span style={{color:'var(--sel-t)',fontWeight:800}}>{fmt(totalSel)}</span> · 선별율 <span style={{color:rateCol,fontWeight:800}}>{rate!==null?rate+'%':'—'}</span></>
+                            :<span style={{color:'var(--tx3)'}}>선별 · 선별율</span>}
+                        </div>
+                        <div style={{fontSize:14.5,fontWeight:700,color:'var(--tx2)',whiteSpace:'nowrap'}}>
+                          📦 판매 {totalSel>0?fmtDate(sellDate):''} {totalSel>0&&<span style={{color:'#7C3AED',fontWeight:900,fontSize:17,marginLeft:2}}>{fmt(sellQty)}</span>}
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {!s.done&&isAdmin&&<button className="si-ib" onClick={()=>{setForm({date:s.s1,room:s.room,type:'사육',amount:''});setTab('input');localStorage.setItem('db_tab','input');}}><i className="ti ti-plus" style={{fontSize:16}}/>선별 입력하기</button>}
                 </div>
               );
