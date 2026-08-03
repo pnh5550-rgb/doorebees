@@ -595,8 +595,13 @@ textarea{resize:none;height:68px;font-size:14px;}
 
   <!-- 기록 수정 -->
   <div class="card">
-    <div class="card-ttl">📋 이력 조회 및 수정</div>
-    <div style="font-size:14px;color:var(--sub);margin-bottom:12px;">수정할 기록 유형을 선택하세요.</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div class="card-ttl" style="margin:0;">📋 이력 조회 및 수정</div>
+      <button id="trashToggle" onclick="toggleTrash()" style="background:#f0e6da;border:1px solid #d8c8b0;border-radius:16px;padding:7px 15px;font-size:13px;font-weight:800;color:#6b5430;cursor:pointer;font-family:inherit;white-space:nowrap;">🗑 휴지통</button>
+    </div>
+    <div style="font-size:14px;color:var(--sub);margin-bottom:12px;margin-top:6px;">수정할 기록 유형을 선택하세요.</div>
+    <!-- 휴지통 목록 (접힘) -->
+    <div id="trashList" style="display:none;margin-bottom:12px;background:#faf7f2;border:1px solid #e5ddd0;border-radius:10px;padding:8px 12px;"></div>
     <!-- 연도 필터 -->
     <div class="filter-row" id="editYearFilter" style="margin-bottom:8px;"></div>
     <!-- 타입 필터 -->
@@ -609,16 +614,6 @@ textarea{resize:none;height:68px;font-size:14px;}
       <button class="fbtn rc-death" id="editFbtn-death" onclick="setEditFilter('death')">💀 폐사</button>
     </div>
     <div id="editList"></div>
-  </div>
-
-  <!-- 휴지통 -->
-  <div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-      <div class="sec" style="margin:0;">🗑 휴지통</div>
-      <button id="trashToggle" onclick="toggleTrash()" style="background:#eee7da;border:none;border-radius:14px;padding:6px 14px;font-size:13px;font-weight:700;color:#6b5430;cursor:pointer;font-family:inherit;">열기</button>
-    </div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">삭제한 기록이 여기 보관됩니다. 복원하면 재고까지 원래대로 되돌아갑니다.</div>
-    <div id="trashList" style="display:none;"></div>
   </div>
 
   <!-- 산란세팅 목표 업데이트 -->
@@ -2143,7 +2138,7 @@ let _trashOpen=false;
 function toggleTrash(){
   _trashOpen=!_trashOpen;
   document.getElementById('trashList').style.display=_trashOpen?'block':'none';
-  document.getElementById('trashToggle').textContent=_trashOpen?'닫기':'열기';
+  document.getElementById('trashToggle').textContent=_trashOpen?'🗑 닫기':'🗑 휴지통';
   if(_trashOpen) renderTrash();
 }
 function renderTrash(){
