@@ -870,7 +870,6 @@ function App(){
   const [trash,setTrash]=useState([]);
   const [showTrash,setShowTrash]=useState(false);
   const unsubRef=useRef(null);
-  const unsubTrashRef=useRef(null);
 
   useEffect(()=>{
     if(typeof firebase==='undefined')return;
@@ -880,21 +879,17 @@ function App(){
       ref.on('value',snap=>{
         const val=snap.val();
         if(val){
-          const arr=Object.entries(val).map(([id,v])=>({...v,id})).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
-          setEntries(arr);
+          const all=Object.entries(val).map(([id,v])=>({...v,id}));
+          const live=all.filter(e=>!e.deleted).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+          const del=all.filter(e=>e.deleted).sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0));
+          setEntries(live);
+          setTrash(del);
         }else{doUpload(HIST_INIT);}
         setFbConn(true);
       });
-      const tref=firebase.database().ref('trash_v1');
-      unsubTrashRef.current=tref;
-      tref.on('value',snap=>{
-        const val=snap.val();
-        const arr=val?Object.entries(val).map(([id,v])=>({...v,id})).sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0)):[];
-        setTrash(arr);
-      });
       firebase.database().ref('config/adminPw').once('value').then(snap=>{if(snap.val())window.ADMIN_PW=snap.val();});
     }catch(e){console.error(e);}
-    return()=>{if(unsubRef.current)unsubRef.current.off();if(unsubTrashRef.current)unsubTrashRef.current.off();};
+    return()=>{if(unsubRef.current)unsubRef.current.off();};
   },[]);
 
   function doUpload(data){
@@ -987,20 +982,13 @@ function App(){
     if(!target)return;
     const lb=target.type==='산란'?'산란세팅':target.type==='사육'?'사육세팅':'산란폐기';
     if(!confirm(`${target.date}  ${target.room}\n${lb}  ${fmt(target.amount)}\n\n삭제할까요? (휴지통으로 이동)`))return;
-    const {id:_omit,...body}=target;
-    const trashItem={...body,deletedAt:Date.now()};
     try{
-      if(fbConn){
-        await fbPush('trash_v1',trashItem);
-        await fbRemove(`entries_v2/${id}`);
-      }else{
-        setTrash(p=>[...p,{...trashItem,id:'trash_'+Date.now()}]);
-        setEntries(p=>p.filter(e=>e.id!==id));
-      }
+      if(fbConn){await fbUpdate(`entries_v2/${id}`,{deleted:true,deletedAt:Date.now()});}
+      else{setEntries(p=>p.filter(e=>e.id!==id));setTrash(p=>[{...target,deletedAt:Date.now()},...p]);}
       showUndoToast('🗑 휴지통으로 이동',async()=>{
         try{
-          if(fbConn){await fbPush('entries_v2',body);}
-          else{setEntries(prev=>[...prev,{...body,id:'loc_'+Date.now()}].sort((a,b)=>a.date.localeCompare(b.date)));}
+          if(fbConn){await fbUpdate(`entries_v2/${id}`,{deleted:null,deletedAt:null});}
+          else{setTrash(p=>p.filter(x=>x.id!==id));setEntries(p=>[...p,target].sort((a,b)=>a.date.localeCompare(b.date)));}
           showToast('✓ 복원되었습니다');
         }catch(err){showToast('복원 실패: '+err.message);}
       });
@@ -1009,10 +997,9 @@ function App(){
   // 휴지통에서 복원
   async function restoreTrash(t){
     if(!isAdmin){showToast('관리자 로그인 후 복원 가능');return;}
-    const {id,deletedAt,...body}=t;
     try{
-      if(fbConn){await fbPush('entries_v2',body);await fbRemove(`trash_v1/${id}`);}
-      else{setEntries(prev=>[...prev,{...body,id:'loc_'+Date.now()}].sort((a,b)=>a.date.localeCompare(b.date)));setTrash(p=>p.filter(x=>x.id!==id));}
+      if(fbConn){await fbUpdate(`entries_v2/${t.id}`,{deleted:null,deletedAt:null});}
+      else{const{deletedAt,...body}=t;setTrash(p=>p.filter(x=>x.id!==t.id));setEntries(p=>[...p,body].sort((a,b)=>a.date.localeCompare(b.date)));}
       showToast('✓ 복원되었습니다');
     }catch(e){showToast('복원 실패: '+e.message);}
   }
@@ -1021,7 +1008,7 @@ function App(){
     if(!isAdmin){showToast('관리자 로그인 후 가능');return;}
     if(!confirm('완전히 삭제할까요?\n이 작업은 되돌릴 수 없습니다.'))return;
     try{
-      if(fbConn){await fbRemove(`trash_v1/${t.id}`);}
+      if(fbConn){await fbRemove(`entries_v2/${t.id}`);}
       else{setTrash(p=>p.filter(x=>x.id!==t.id));}
       showToast('완전 삭제됨');
     }catch(e){showToast('실패: '+e.message);}
