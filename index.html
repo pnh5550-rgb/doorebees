@@ -615,6 +615,21 @@ function showToast(msg){
   t.style.cssText='position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;padding:12px 22px;border-radius:24px;font-size:15px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);pointer-events:none;white-space:nowrap;';
   document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
 }
+// 되돌리기 버튼이 있는 토스트 (8초 유지)
+function showUndoToast(msg,onUndo){
+  const old=document.getElementById('undo-toast'); if(old)old.remove();
+  const t=document.createElement('div');
+  t.id='undo-toast';
+  t.style.cssText='position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;padding:11px 14px 11px 20px;border-radius:24px;font-size:15px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);white-space:nowrap;display:flex;align-items:center;gap:12px;';
+  const s=document.createElement('span'); s.textContent=msg; t.appendChild(s);
+  const b=document.createElement('button');
+  b.textContent='되돌리기';
+  b.style.cssText='background:#F59E0B;color:#1a1610;border:none;border-radius:18px;padding:7px 14px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;';
+  b.onclick=function(){t.remove();onUndo();};
+  t.appendChild(b);
+  document.body.appendChild(t);
+  setTimeout(function(){if(document.getElementById('undo-toast')===t)t.remove();},8000);
+}
 
 function fbPush(path,val){return firebase.database().ref(path).push(val);}
 function fbRemove(path){return firebase.database().ref(path).remove();}
@@ -852,7 +867,10 @@ function App(){
   const [histView,setHistView]=useState('all');
   const [form,setForm]=useState({date:today(),room:'가2D',type:'산란',amount:'',note:''});
   const [exporting,setExporting]=useState(false);
+  const [trash,setTrash]=useState([]);
+  const [showTrash,setShowTrash]=useState(false);
   const unsubRef=useRef(null);
+  const unsubTrashRef=useRef(null);
 
   useEffect(()=>{
     if(typeof firebase==='undefined')return;
@@ -867,9 +885,16 @@ function App(){
         }else{doUpload(HIST_INIT);}
         setFbConn(true);
       });
+      const tref=firebase.database().ref('trash_v1');
+      unsubTrashRef.current=tref;
+      tref.on('value',snap=>{
+        const val=snap.val();
+        const arr=val?Object.entries(val).map(([id,v])=>({...v,id})).sort((a,b)=>(b.deletedAt||0)-(a.deletedAt||0)):[];
+        setTrash(arr);
+      });
       firebase.database().ref('config/adminPw').once('value').then(snap=>{if(snap.val())window.ADMIN_PW=snap.val();});
     }catch(e){console.error(e);}
-    return()=>{if(unsubRef.current)unsubRef.current.off();};
+    return()=>{if(unsubRef.current)unsubRef.current.off();if(unsubTrashRef.current)unsubTrashRef.current.off();};
   },[]);
 
   function doUpload(data){
@@ -957,9 +982,49 @@ function App(){
     }catch(e){showToast('저장 실패: '+e.message);}
   }
   async function delEntry(id){
-    if(!isAdmin||!confirm('삭제할까요?'))return;
-    if(fbConn){await fbRemove(`entries_v2/${id}`);}else{setEntries(p=>p.filter(e=>e.id!==id));}
-    showToast('삭제됨');
+    if(!isAdmin){showToast('관리자 로그인 후 삭제 가능');return;}
+    const target=entries.find(e=>e.id===id);
+    if(!target)return;
+    const lb=target.type==='산란'?'산란세팅':target.type==='사육'?'사육세팅':'산란폐기';
+    if(!confirm(`${target.date}  ${target.room}\n${lb}  ${fmt(target.amount)}\n\n삭제할까요? (휴지통으로 이동)`))return;
+    const {id:_omit,...body}=target;
+    const trashItem={...body,deletedAt:Date.now()};
+    try{
+      if(fbConn){
+        await fbPush('trash_v1',trashItem);
+        await fbRemove(`entries_v2/${id}`);
+      }else{
+        setTrash(p=>[...p,{...trashItem,id:'trash_'+Date.now()}]);
+        setEntries(p=>p.filter(e=>e.id!==id));
+      }
+      showUndoToast('🗑 휴지통으로 이동',async()=>{
+        try{
+          if(fbConn){await fbPush('entries_v2',body);}
+          else{setEntries(prev=>[...prev,{...body,id:'loc_'+Date.now()}].sort((a,b)=>a.date.localeCompare(b.date)));}
+          showToast('✓ 복원되었습니다');
+        }catch(err){showToast('복원 실패: '+err.message);}
+      });
+    }catch(e){showToast('삭제 실패: '+e.message);}
+  }
+  // 휴지통에서 복원
+  async function restoreTrash(t){
+    if(!isAdmin){showToast('관리자 로그인 후 복원 가능');return;}
+    const {id,deletedAt,...body}=t;
+    try{
+      if(fbConn){await fbPush('entries_v2',body);await fbRemove(`trash_v1/${id}`);}
+      else{setEntries(prev=>[...prev,{...body,id:'loc_'+Date.now()}].sort((a,b)=>a.date.localeCompare(b.date)));setTrash(p=>p.filter(x=>x.id!==id));}
+      showToast('✓ 복원되었습니다');
+    }catch(e){showToast('복원 실패: '+e.message);}
+  }
+  // 휴지통에서 완전 삭제
+  async function purgeTrash(t){
+    if(!isAdmin){showToast('관리자 로그인 후 가능');return;}
+    if(!confirm('완전히 삭제할까요?\n이 작업은 되돌릴 수 없습니다.'))return;
+    try{
+      if(fbConn){await fbRemove(`trash_v1/${t.id}`);}
+      else{setTrash(p=>p.filter(x=>x.id!==t.id));}
+      showToast('완전 삭제됨');
+    }catch(e){showToast('실패: '+e.message);}
   }
   async function saveEdit(data){
     const{id,...rest}=data;
@@ -1290,9 +1355,46 @@ function App(){
         {/* ── 이력 ── */}
         {tab==='hist'&&(<>
           <div className="tab-inner" style={{marginBottom:10}}>
-            <button className={`ti-btn${histView==='all'?' on-san':''}`} onClick={()=>setHistView('all')}>📋 전체이력</button>
-            <button className={`ti-btn${histView==='batch'?' on-san':''}`} onClick={()=>setHistView('batch')}>📊 배치현황</button>
+            <button className={`ti-btn${histView==='all'?' on-san':''}`} onClick={()=>{setHistView('all');setShowTrash(false);}}>📋 전체이력</button>
+            <button className={`ti-btn${histView==='batch'?' on-san':''}`} onClick={()=>{setHistView('batch');setShowTrash(false);}}>📊 배치현황</button>
           </div>
+          {isAdmin&&(
+            <div style={{marginBottom:10,display:'flex',justifyContent:'flex-end'}}>
+              <button onClick={()=>setShowTrash(v=>!v)} style={{background:showTrash?'#FEE2E2':'var(--sf)',border:`1.5px solid ${showTrash?'#DC2626':'var(--bd)'}`,color:showTrash?'#991B1B':'var(--tx2)',borderRadius:20,padding:'7px 14px',fontSize:13.5,fontWeight:700,fontFamily:'inherit'}}>
+                🗑 휴지통{trash.length>0?` ${trash.length}`:''}
+              </button>
+            </div>
+          )}
+          {showTrash&&isAdmin&&(
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:13,color:'var(--tx2)',fontWeight:600,marginBottom:9,lineHeight:1.5}}>
+                삭제한 기록이 보관됩니다. <b>복원</b>을 누르면 이력으로 되돌아가요.
+              </div>
+              {trash.length===0
+                ?<div style={{background:'var(--sf2)',border:'1px dashed var(--bd)',borderRadius:'var(--r)',padding:'22px 14px',textAlign:'center',color:'var(--tx3)',fontSize:14,fontWeight:600}}>휴지통이 비어 있습니다</div>
+                :trash.map(t=>{
+                  const lb=t.type==='산란'?'산란세팅':t.type==='사육'?'사육세팅':'산란폐기';
+                  const dd=t.deletedAt?new Date(t.deletedAt):null;
+                  return(
+                    <div key={t.id} style={{background:'var(--sf)',border:'1px solid var(--bd)',borderLeft:'5px solid #9CA3AF',borderRadius:'var(--r)',padding:'11px 13px',marginBottom:8,boxShadow:'var(--sh)'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+                        <span style={{fontSize:14,fontWeight:800}}>{t.date}</span>
+                        <span style={{fontSize:14,fontWeight:700}}>{t.room}</span>
+                        <span className={`hi-b ${typeBadge(t.type)}`}>{lb}</span>
+                        <span style={{fontSize:16,fontWeight:800,marginLeft:'auto'}}>{fmt(t.amount)}</span>
+                      </div>
+                      {t.note&&<div style={{fontSize:13,color:'var(--tx2)',marginTop:6,fontWeight:500}}>📝 {t.note}</div>}
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginTop:9,paddingTop:9,borderTop:'1px dashed var(--bd)'}}>
+                        {dd&&<span style={{fontSize:12,color:'var(--tx3)',fontWeight:600}}>{dd.getMonth()+1}/{dd.getDate()} 삭제</span>}
+                        <button onClick={()=>restoreTrash(t)} style={{marginLeft:'auto',background:'#16A34A',color:'#fff',border:'none',borderRadius:16,padding:'7px 15px',fontSize:13.5,fontWeight:800,fontFamily:'inherit'}}>↩ 복원</button>
+                        <button onClick={()=>purgeTrash(t)} style={{background:'var(--sf2)',color:'var(--tx2)',border:'1px solid var(--bd)',borderRadius:16,padding:'7px 13px',fontSize:13,fontWeight:700,fontFamily:'inherit'}}>완전삭제</button>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+          {!showTrash&&(<>
           {years.length>1&&(
             <div className="fbar" style={{marginBottom:10}}>
               <span style={{padding:'0 6px 0 2px',color:'var(--tx3)',fontSize:13,fontWeight:700}}>연도</span>
@@ -1319,6 +1421,7 @@ function App(){
                 {e.note&&<div style={{fontSize:13,color:'var(--tx2)',fontWeight:500,marginTop:7,paddingTop:7,borderTop:'1px dashed var(--bd)',lineHeight:1.5}}>📝 {e.note}</div>}
               </div>
             ))}
+          </>)}
           </>)}
         </>)}
 
