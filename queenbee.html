@@ -188,8 +188,8 @@ textarea{resize:none;height:68px;font-size:14px;}
 .fbtn.on{background:var(--G);border-color:var(--G);color:#fff;}
 
 /* ── 토스트 ── */
-#toast{position:fixed;bottom:calc(var(--nav-h) + 16px);left:50%;transform:translateX(-50%) translateY(8px);background:#1b6b30;color:#fff;padding:12px 24px;border-radius:26px;font-size:15px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:400;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.18);}
-#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#toast{position:fixed;bottom:calc(var(--nav-h) + 16px);left:50%;transform:translateX(-50%) translateY(8px);background:#1b6b30;color:#fff;padding:12px 20px;border-radius:26px;font-size:15px;font-weight:700;opacity:0;transition:all .25s;pointer-events:none;z-index:400;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;max-width:90vw;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
 #toast.err{background:var(--R);}
 
 /* ── 컨펌 ── */
@@ -611,6 +611,16 @@ textarea{resize:none;height:68px;font-size:14px;}
     <div id="editList"></div>
   </div>
 
+  <!-- 휴지통 -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div class="sec" style="margin:0;">🗑 휴지통</div>
+      <button id="trashToggle" onclick="toggleTrash()" style="background:#eee7da;border:none;border-radius:14px;padding:6px 14px;font-size:13px;font-weight:700;color:#6b5430;cursor:pointer;font-family:inherit;">열기</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">삭제한 기록이 여기 보관됩니다. 복원하면 재고까지 원래대로 되돌아갑니다.</div>
+    <div id="trashList" style="display:none;"></div>
+  </div>
+
   <!-- 산란세팅 목표 업데이트 -->
   <div class="card">
     <div class="card-ttl">📅 월별 산란목표 일괄 수정</div>
@@ -862,10 +872,25 @@ function nearSched(dateStr, key='collection_thu'){
 ═══════════════════════════════════ */
 function toast(msg, ok=true){
   const t=document.getElementById('toast');
+  t.innerHTML='';
   t.textContent=msg;
   t.className = ok ? 'show' : 'show err';
   clearTimeout(t._t);
   t._t=setTimeout(()=>t.className='',2600);
+}
+// 되돌리기 버튼이 있는 토스트 (삭제 직후 즉시 복원용)
+function toastUndo(msg, undoCb){
+  const t=document.getElementById('toast');
+  t.innerHTML='';
+  const span=document.createElement('span'); span.textContent=msg;
+  const btn=document.createElement('button');
+  btn.textContent='되돌리기';
+  btn.style.cssText='margin-left:14px;background:rgba(255,255,255,.25);color:#fff;border:none;border-radius:14px;padding:5px 13px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;';
+  btn.onclick=()=>{ clearTimeout(t._t); t.className=''; if(undoCb) undoCb(); };
+  t.appendChild(span); t.appendChild(btn);
+  t.className='show';
+  clearTimeout(t._t);
+  t._t=setTimeout(()=>t.className='',6000);  // 되돌리기는 6초간 표시
 }
 let _cfmCb=null;
 function cfmOpen(title,msg,cb){ document.getElementById('cfmTitle').textContent=title; document.getElementById('cfmMsg').textContent=msg; _cfmCb=cb; document.getElementById('cfmBg').classList.add('open'); }
@@ -1561,13 +1586,24 @@ function deleteEvent(eid){
   if(!requireAdmin()) return;
   const e=DB.events.find(x=>x.id===eid);
   if(!e){ return; }
-  // 삭제 시 재고 원복 (월동입고/월동해제만 재고에 영향)
+  // 재고 원복 정보를 기록해두고, 실제 재고 반영
+  applyDeleteStock(e);
+  // 이벤트 제거 + 휴지통 보관
+  DB.events=DB.events.filter(x=>x.id!==eid);
+  if(!DB.trash) DB.trash=[];
+  DB.trash.unshift({...e, deletedAt:Date.now()});
+  if(DB.trash.length>100) DB.trash=DB.trash.slice(0,100);  // 최근 100건만 보관
+  saveDB(); renderEditList(); renderStock(); renderHome(); if(typeof renderTrash==='function') renderTrash();
+  // 되돌리기 버튼이 있는 토스트
+  toastUndo(`삭제됨 · ${e.type==='collect'?'채집':e.type==='col'?'월동입고':e.type==='rel'?'월동해제':e.type==='plant'?'산란':e.type==='death'?'폐사':e.type} ${comma(e.qty)}`, ()=>restoreTrash(e.id));
+}
+
+// 삭제 시 재고 반영 (월동입고/월동해제만 재고에 영향)
+function applyDeleteStock(e){
   if(e.type==='col'){
-    // 월동입고 취소 → 그 배치에서 감소
     const b=DB.batches.find(x=>x.id===e.batch_id);
     if(b){ b.wintered=Math.max(0,(b.wintered||0)-e.qty); }
   } else if(e.type==='rel'){
-    // 월동해제 취소 → 재고 복원
     if(e.batch_id){
       const b=DB.batches.find(x=>x.id===e.batch_id);
       if(b){ b.wintered=(b.wintered||0)+e.qty; }
@@ -1576,8 +1612,45 @@ function deleteEvent(eid){
     }
   }
   // plant(산란), death(폐사), collect(채집)은 재고 무관
-  DB.events=DB.events.filter(x=>x.id!==eid);
-  saveDB(); renderEditList(); renderStock(); renderHome(); toast('삭제 완료 (재고 반영)');
+}
+
+// 삭제 복원 시 재고 되돌리기 (applyDeleteStock의 반대)
+function undoDeleteStock(e){
+  if(e.type==='col'){
+    const b=DB.batches.find(x=>x.id===e.batch_id);
+    if(b){ b.wintered=(b.wintered||0)+e.qty; }   // 입고 되살림
+  } else if(e.type==='rel'){
+    if(e.batch_id){
+      const b=DB.batches.find(x=>x.id===e.batch_id);
+      if(b){ b.wintered=Math.max(0,(b.wintered||0)-e.qty); }  // 해제 되살림 = 재고 다시 차감
+    } else {
+      deductStock(e.qty);
+    }
+  }
+}
+
+// 휴지통에서 복원
+function restoreTrash(eid){
+  if(!requireAdmin()) return;
+  if(!DB.trash) DB.trash=[];
+  const idx=DB.trash.findIndex(x=>x.id===eid);
+  if(idx<0){ toast('복원할 항목을 찾을 수 없습니다.',false); return; }
+  const e=DB.trash[idx];
+  // 삭제 때 뺐던 필드(deletedAt) 제거하고 이벤트 되살림
+  const {deletedAt, ...ev}=e;
+  DB.events.push(ev);
+  undoDeleteStock(ev);        // 재고도 원래대로
+  DB.trash.splice(idx,1);
+  saveDB(); renderEditList(); renderStock(); renderHome(); if(typeof renderTrash==='function') renderTrash();
+  toast(`복원 완료 · ${ev.type==='collect'?'채집':ev.type==='col'?'월동입고':ev.type==='rel'?'월동해제':ev.type==='plant'?'산란':ev.type==='death'?'폐사':ev.type} ${comma(ev.qty)}`);
+}
+
+// 휴지통 영구 삭제
+function purgeTrash(eid){
+  if(!requireAdmin()) return;
+  if(!DB.trash) return;
+  DB.trash=DB.trash.filter(x=>x.id!==eid);
+  saveDB(); if(typeof renderTrash==='function') renderTrash();
 }
 
 function exportCSV(){
@@ -2065,6 +2138,34 @@ function renderEditList(){
   document.getElementById('editList').innerHTML=html;
 }
 
+// ── 휴지통 ──
+let _trashOpen=false;
+function toggleTrash(){
+  _trashOpen=!_trashOpen;
+  document.getElementById('trashList').style.display=_trashOpen?'block':'none';
+  document.getElementById('trashToggle').textContent=_trashOpen?'닫기':'열기';
+  if(_trashOpen) renderTrash();
+}
+function renderTrash(){
+  const box=document.getElementById('trashList');
+  if(!box) return;
+  if(!DB.trash) DB.trash=[];
+  if(!DB.trash.length){ box.innerHTML='<div class="empty" style="padding:16px 0;">휴지통이 비어 있습니다</div>'; return; }
+  const typeMap={collect:['🐝 채집','#0a5f6e'],col:['🌡 월동입고','#1a6e34'],rel:['🔓 월동해제','#1a5fa0'],plant:['🌱 산란세팅','#5a9e1a'],death:['💀 폐사','#c0392b']};
+  box.innerHTML=DB.trash.map(e=>{
+    const [label,color]=typeMap[e.type]||[e.type,'#666'];
+    const delAgo=e.deletedAt?new Date(e.deletedAt):null;
+    const agoTxt=delAgo?`${delAgo.getMonth()+1}/${delAgo.getDate()} ${String(delAgo.getHours()).padStart(2,'0')}:${String(delAgo.getMinutes()).padStart(2,'0')} 삭제`:'';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+      <div style="font-weight:800;color:${color};font-size:14px;min-width:80px;">${label}</div>
+      <div style="font-weight:900;font-size:15px;min-width:60px;">${comma(e.qty)}</div>
+      <div style="font-size:13px;color:var(--sub);">${fmtKo(e.date)}</div>
+      <div style="font-size:11px;color:var(--muted);flex:1;">${agoTxt}</div>
+      <button onclick="restoreTrash('${e.id}')" style="background:#e3f0e6;border:1px solid #a8d0b0;border-radius:12px;padding:5px 12px;font-size:13px;font-weight:800;color:#1a6e34;cursor:pointer;font-family:inherit;">복원</button>
+      <button onclick="if(confirm('완전히 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.'))purgeTrash('${e.id}')" style="background:#faf0ef;border:1px solid #e5b8b3;border-radius:12px;padding:5px 10px;font-size:12px;font-weight:700;color:#c0392b;cursor:pointer;font-family:inherit;">영구삭제</button>
+    </div>`;
+  }).join('');
+}
 
 function openEditModal(eid){
   _editingId=eid;
