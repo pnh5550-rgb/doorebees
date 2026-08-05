@@ -1605,8 +1605,28 @@ function applyDeleteStock(e){
     } else {
       restoreStock(e.qty);
     }
+  } else if(e.type==='collect'){
+    // 채집은 재고(wintered)엔 무관하지만 batch.collect_qty에 반영됨.
+    // 이 이벤트를 뺀 나머지 채집 이벤트 합으로 batch.collect_qty를 다시 계산한다.
+    syncBatchCollect(e.batch_id, e.id);
   }
-  // plant(산란), death(폐사), collect(채집)은 재고 무관
+  // plant(산란), death(폐사)는 재고·collect_qty 무관
+}
+
+// 배치의 collect_qty를 (특정 이벤트 제외 후) 남은 채집 이벤트 합으로 동기화
+// excludeId: 이 이벤트는 아직 DB.events에서 안 지워졌더라도 계산에서 제외
+function syncBatchCollect(batchId, excludeId){
+  if(!batchId) return;
+  const b=DB.batches.find(x=>x.id===batchId);
+  if(!b) return;
+  const sum=DB.events
+    .filter(e=>e.type==='collect' && e.batch_id===batchId && e.id!==excludeId)
+    .reduce((a,e)=>a+e.qty,0);
+  b.collect_qty=sum;
+  // 채집도 없고 재고도 없는 빈 배치는 제거 (유령 방지). 단 초기데이터(bc*)는 보존
+  if(sum===0 && (b.wintered||0)===0 && !String(b.id).startsWith('bc')){
+    DB.batches=DB.batches.filter(x=>x.id!==batchId);
+  }
 }
 
 // 삭제 복원 시 재고 되돌리기 (applyDeleteStock의 반대)
@@ -1621,6 +1641,12 @@ function undoDeleteStock(e){
     } else {
       deductStock(e.qty);
     }
+  } else if(e.type==='collect'){
+    // 채집 복원: 삭제로 배치가 사라졌으면 다시 만들고, collect_qty를 남은 이벤트 합으로 동기화
+    // (restoreTrash에서 이 이벤트는 이미 DB.events에 push된 뒤 호출됨)
+    let b=DB.batches.find(x=>x.id===e.batch_id);
+    if(!b){ b={id:e.batch_id, col_date:e.date, collect_qty:0, wintered:0, note:e.note||''}; DB.batches.push(b); }
+    syncBatchCollect(e.batch_id, null);
   }
 }
 
@@ -2226,8 +2252,7 @@ function saveEditModal(){
       else if(diff<0) restoreStock(-diff);
     }
   } else if(e.type==='collect'){
-    const b=DB.batches.find(x=>x.id===e.batch_id);
-    if(b) b.collect_qty=newQty;                                      // 채집 수정(재고무관)
+    // collect_qty는 아래에서 이벤트(e.qty) 갱신 후 syncBatchCollect로 재계산 (여러 이벤트 대비)
   }
   // plant(산란), death(폐사)는 재고 무관
   // 배치 변경 처리 (rel/plant/death만 변경 가능)
@@ -2243,6 +2268,7 @@ function saveEditModal(){
     e.batch_id=_editBatch;
   }
   e.date=newDate; e.qty=newQty; e.note=newNote;
+  if(e.type==='collect'){ syncBatchCollect(e.batch_id, null); }  // 채집 수정 후 배치 동기화
   _editBatch=null; _selectedBatch=null;
   saveDB(); renderEditList(); renderStock(); renderHome();
   closeEditModal(); toast('수정 완료 ✅ (재고 반영)');
