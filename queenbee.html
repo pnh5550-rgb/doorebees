@@ -835,19 +835,28 @@ function batchRemain(bid){
 // 전체 재고에서 가장 오래된 배치부터 차감 (선입선출). 차감한 총량 반환.
 function deductStock(qty){
   let remain=qty;
+  const detail=[];  // 어느 배치에서 얼마 깎았는지 기록 [{id, amt}]
   const sorted=[...DB.batches].filter(b=>(b.wintered||0)>0).sort((a,b)=>a.col_date.localeCompare(b.col_date));
   for(const b of sorted){
     if(remain<=0) break;
     const take=Math.min(b.wintered, remain);
     b.wintered-=take;
     remain-=take;
+    detail.push({id:b.id, amt:take});
   }
-  return qty-remain;  // 실제 차감된 양
+  return detail;  // 차감 내역 반환 (복원용)
 }
 
-// 차감 복원: 가장 최근 배치부터 되돌림 (삭제/수정 취소 시)
-function restoreStock(qty){
-  let remain=qty;
+// 차감 복원: 차감 내역(detail)이 있으면 그대로 각 배치에 되돌림 (정확)
+// detail이 없으면(옛 데이터) 가장 최근 배치에 몰아줌 (하위호환)
+function restoreStock(qty, detail){
+  if(Array.isArray(detail) && detail.length){
+    for(const d of detail){
+      const b=DB.batches.find(x=>x.id===d.id);
+      if(b){ b.wintered=(b.wintered||0)+d.amt; }
+    }
+    return;
+  }
   const sorted=[...DB.batches].sort((a,b)=>b.col_date.localeCompare(a.col_date));
   if(sorted.length){ sorted[0].wintered=(sorted[0].wintered||0)+qty; }
 }
@@ -1206,13 +1215,15 @@ function saveRel(){
       if(!ok) return;
     }
   }
-  DB.events.push({id:'e'+Date.now(),type:'rel',date,qty,batch_id:bid,note});
+  const relEv={id:'e'+Date.now(),type:'rel',date,qty,batch_id:bid,note};
+  DB.events.push(relEv);
   // 월동해제 → 재고 차감
   if(bid){
     const b=DB.batches.find(x=>x.id===bid);
     if(b){ b.wintered=Math.max(0,(b.wintered||0)-qty); }  // 선택 배치에서 차감 (0이어도 진행)
   } else {
-    deductStock(qty);  // 전체 재고에서 오래된 것부터 차감
+    const detail=deductStock(qty);  // 전체 재고에서 오래된 것부터 차감
+    relEv.deductDetail=detail;       // 어느 배치에서 얼마 깎였는지 기록 (삭제 시 정확 복원용)
   }
   saveDB();
   toast(`월동 해제 ${comma(qty)} 저장 ✅ (재고 -${comma(qty)})`);
@@ -1609,7 +1620,7 @@ function applyDeleteStock(e){
       const b=DB.batches.find(x=>x.id===e.batch_id);
       if(b){ b.wintered=(b.wintered||0)+e.qty; }
     } else {
-      restoreStock(e.qty);
+      restoreStock(e.qty, e.deductDetail);  // 차감 내역이 있으면 정확히, 없으면 최근 배치에
     }
   } else if(e.type==='collect'){
     // 채집은 재고(wintered)엔 무관하지만 batch.collect_qty에 반영됨.
@@ -1644,6 +1655,12 @@ function undoDeleteStock(e){
     if(e.batch_id){
       const b=DB.batches.find(x=>x.id===e.batch_id);
       if(b){ b.wintered=Math.max(0,(b.wintered||0)-e.qty); }  // 해제 되살림 = 재고 다시 차감
+    } else if(Array.isArray(e.deductDetail) && e.deductDetail.length){
+      // 미지정 해제 복원: 원래 깎았던 배치들에서 다시 그만큼 차감
+      for(const dd of e.deductDetail){
+        const b=DB.batches.find(x=>x.id===dd.id);
+        if(b){ b.wintered=Math.max(0,(b.wintered||0)-dd.amt); }
+      }
     } else {
       deductStock(e.qty);
     }
