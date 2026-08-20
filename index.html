@@ -1251,7 +1251,7 @@ function App(){
                             :<span style={{color:'var(--tx3)'}}>선별 · 선별율</span>}
                         </div>
                         <div style={{fontSize:14.5,fontWeight:700,color:'var(--tx2)',whiteSpace:'nowrap'}}>
-                          📦 판매 {totalSel>0?fmtDate(sellDate):''} {totalSel>0&&<span style={{color:'#7C3AED',fontWeight:900,fontSize:17,marginLeft:2}}>{fmt(sellQty)}</span>}
+                          📦 판매 <span style={{color:'var(--tx2)'}}>{fmtDate(sellDate)}</span> {totalSel>0&&<span style={{color:'#7C3AED',fontWeight:900,fontSize:17,marginLeft:2}}>{fmt(sellQty)}</span>}
                         </div>
                       </div>
                     );
