@@ -76,7 +76,7 @@ window.computeBatches = function(entries){
     b.sels.forEach(function(s){ if(s.date===fd) s1+=s.amount; else s2+=s.amount; });
     b.s1=s1; b.s2=s2; b.sel=s1+s2;
     b.peg=b.pegs.reduce(function(a,p){return a+p.amount;},0);
-    b.remain=Math.max(0,b.san-b.sel-b.peg);
+    b.remain=b.san-b.sel-b.peg;
     b.rate=(b.san>0&&b.sel>0)?Math.round(b.sel/b.san*100):null;
   });
   list.sort(function(a,b){return a.date>b.date?-1:1;});
@@ -785,10 +785,10 @@ function SanBatchView({entries,year}){
             <div style={{fontSize:18,fontWeight:800,color:peg>0?'var(--peg-t)':'var(--tx3)',letterSpacing:'-.3px'}}>{peg>0?fmt(peg):'—'}</div>
             <div style={{fontSize:12,color:peg>0?'var(--peg-t)':'var(--tx3)',fontWeight:700,marginTop:2}}>{peg>0?pegR+'%':done?'없음':''}</div>
           </div>
-          <div style={{background:'var(--san-h)',borderRadius:9,padding:'8px 9px',border:'1px solid #86EFAC'}}>
-            <div style={{fontSize:12,color:'var(--san-t)',fontWeight:700,marginBottom:3}}>📦 잔량</div>
-            <div style={{fontSize:18,fontWeight:800,color:'var(--san-t)',letterSpacing:'-.3px'}}>{fmt(remain)}</div>
-            <div style={{fontSize:12,color:'var(--san-t)',fontWeight:700,marginTop:2}}>{g.san>0?Math.round(remain/g.san*100)+'%':''}</div>
+          <div style={{background:remain<0?'#FEE2E2':'var(--san-h)',borderRadius:9,padding:'8px 9px',border:`1px solid ${remain<0?'#FCA5A5':'#86EFAC'}`}}>
+            <div style={{fontSize:12,color:remain<0?'#991B1B':'var(--san-t)',fontWeight:700,marginBottom:3}}>📦 잔량</div>
+            <div style={{fontSize:18,fontWeight:800,color:remain<0?'#DC2626':'var(--san-t)',letterSpacing:'-.3px'}}>{fmt(remain)}{remain<0?' ⚠':''}</div>
+            <div style={{fontSize:12,color:remain<0?'#991B1B':'var(--san-t)',fontWeight:700,marginTop:2}}>{remain<0?'입력 초과':(g.san>0?Math.round(remain/g.san*100)+'%':'')}</div>
           </div>
         </div>
         {!done&&(()=>{const {s1,s2}=weekTueFri(g.date);return <div style={{marginTop:9,fontSize:13,color:'var(--tx2)',display:'flex',gap:16}}>
@@ -1205,6 +1205,8 @@ function App(){
                   <div className="si-m" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:0,marginBottom:9}}>
                     <span>산란세팅 {fmtDate(s.date)} · {fmt(s.amount)}</span>
                     {(()=>{
+                      // 잔량 음수(입력 초과)면 오류로 강조
+                      if(s.remain<0)return <span style={{color:'#DC2626',fontWeight:800}}>잔량 {fmt(s.remain)} ⚠</span>;
                       // 완전 완료면 산란세팅과 동일 색(기본), 아니면 다음 예정 D-day 색 따라감
                       if(s.done)return <span style={{color:'var(--tx2)'}}>잔량 {fmt(s.remain)}</span>;
                       const nd=s.done1?d2:d1;  // 다음 예정(1차 끝났으면 2차)
