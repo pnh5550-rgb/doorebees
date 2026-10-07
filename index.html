@@ -146,7 +146,10 @@ window.generateExcel = function(entries) {
     var rs=san.filter(function(e){return e.room===room;}).reduce(function(a,e){return a+e.amount;},0);
     var rsel=sel.filter(function(e){return e.room===room;}).reduce(function(a,e){return a+e.amount;},0);
     var rpeg=peg.filter(function(e){return e.room===room;}).reduce(function(a,e){return a+e.amount;},0);
-    var occ=Math.max(0,rs-rsel-rpeg); var avail=Math.max(0,cap-occ);
+    // 룸이동: 출발룸에서 빠지고 도착룸으로 들어옴 (총계 불변 → 산란/선별/폐기 집계엔 미반영)
+    var rmvO=entries.filter(function(e){return e.type==='이동'&&e.room===room;}).reduce(function(a,e){return a+e.amount;},0);
+    var rmvI=entries.filter(function(e){return e.type==='이동'&&e.toRoom===room;}).reduce(function(a,e){return a+e.amount;},0);
+    var occ=Math.max(0,rs-rsel-rpeg-rmvO+rmvI); var avail=Math.max(0,cap-occ);
     var rate=cap>0?Math.round(occ/cap*100):0;
     capT+=cap; occT+=occ; sanT+=rs; selT+=rsel; pegT+=rpeg;
     var rb=rate<60?'D1FAE5':(rate<85?'FEF3C7':'FEE2E2');
@@ -217,12 +220,13 @@ window.generateExcel = function(entries) {
     var c=ws3.getCell(4,j+1); c.value=h; H(c,'374151','FFFFFF',10); B(c);
   });
   ws3.getRow(4).height=22;
-  var TM={'산란':'산란세팅','선별':'사육세팅','산란폐기':'산란폐기'};
-  var TB={'산란':'D8F3DC','선별':'DBEAFE','산란폐기':'FEE2E2'};
+  var TM={'산란':'산란세팅','선별':'사육세팅','산란폐기':'산란폐기','이동':'룸이동'};
+  var TB={'산란':'D8F3DC','선별':'DBEAFE','산란폐기':'FEE2E2','이동':'EDE9FE'};
   var sortedHist=entries.slice().sort(function(a,b){return a.date<b.date?1:(a.date>b.date?-1:0);});
   sortedHist.forEach(function(e,i){
     var nt=NT(e.type); var tl=TM[nt]||e.type; var bg=TB[nt]||'FFFFFF';
-    [e.date,e.room,tl,e.amount,e.type,e.note||''].forEach(function(v,j){
+    var rmTxt=(e.type==='이동'&&e.toRoom)?(e.room+' → '+e.toRoom):e.room;
+    [e.date,rmTxt,tl,e.amount,e.type,e.note||''].forEach(function(v,j){
       var c=ws3.getCell(5+i,j+1); c.value=v; D(c,bg,'1E293B',10,j===3,j===5?'left':'center'); B(c);
     });
     ws3.getRow(5+i).height=17;
@@ -337,12 +341,15 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .rbtn.s-sak{background:var(--sak-h);border-color:var(--sak);color:var(--sak-t)}
 .rbtn.s-na{background:#DBEAFE;border-color:#2563EB;color:#1E40AF;box-shadow:0 2px 8px rgba(37,99,235,.22)}
 .tbtns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:12px}
+.tbtns.tbtns-4{grid-template-columns:1fr 1fr}
 .tbtn{padding:12px 5px;border:1.5px solid var(--bd2);background:var(--sf);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:700;color:var(--tx);display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit;transition:transform .1s,box-shadow .12s,background .12s,border-color .12s}
 .tbtn:active{transform:scale(.96)}
 .tbtn i{font-size:20px}
 .tbtn.s-san{background:var(--san-h);border-color:var(--san);color:var(--san-t);box-shadow:0 2px 10px rgba(22,163,74,.2)}
 .tbtn.s-sel{background:var(--sel-bg);border-color:var(--sel);color:var(--sel-t);box-shadow:0 2px 10px rgba(37,99,235,.2)}
 .tbtn.s-peg{background:var(--peg-bg);border-color:var(--peg);color:var(--peg-t);box-shadow:0 2px 10px rgba(234,88,12,.2)}
+.tbtn.s-mv{background:var(--sak-h);border-color:var(--sak);color:var(--sak-t);box-shadow:0 2px 10px rgba(124,58,237,.2)}
+.rbtn.s-mv{background:var(--sak-h);border-color:var(--sak);color:var(--sak-t);box-shadow:0 2px 8px rgba(124,58,237,.22)}
 .ainp{width:100%;padding:14px;border:2px solid var(--bd2);border-radius:var(--rs);font-size:26px;font-weight:800;text-align:center;background:var(--sf);color:var(--tx);outline:none;margin-bottom:11px;font-family:inherit}
 .ainp::placeholder{color:var(--tx3);font-weight:600}
 .ainp:focus{border-color:var(--G);box-shadow:0 0 0 3px rgba(10,95,110,.14)}
@@ -416,7 +423,7 @@ body{font-family:'Noto Sans KR','맑은 고딕','Malgun Gothic',sans-serif;backg
 .hi.sak-hi{border-left:3px solid var(--sak)}
 .hi-dt{display:flex;flex-direction:column;min-width:42px;line-height:1.15}.hi-yr{font-size:11px;color:var(--tx3);font-weight:700}.hi-md{font-size:16px;color:var(--tx);font-weight:800;letter-spacing:-.3px}.hi-rm{font-size:16px;font-weight:800;min-width:38px}
 .hi-b{font-size:13px;padding:3px 9px;border-radius:20px;font-weight:700;min-width:38px;text-align:center}
-.b-san{background:var(--san-h);color:var(--san-t)}.b-sel{background:var(--sel-bg);color:var(--sel-t)}.b-peg{background:var(--peg-bg);color:var(--peg-t)}
+.b-san{background:var(--san-h);color:var(--san-t)}.b-sel{background:var(--sel-bg);color:var(--sel-t)}.b-peg{background:var(--peg-bg);color:var(--peg-t)}.b-mv{background:var(--sak-h);color:var(--sak-t)}
 .b-sak2{background:var(--sak-h);color:var(--sak-t)}.b-out{background:#FFF7ED;color:#78350F}.b-spg{background:#FEE2E2;color:#991B1B}
 .hi-a{font-size:17px;font-weight:800;flex:1;text-align:right;letter-spacing:-.3px}
 .del{background:none;border:none;cursor:pointer;color:var(--tx3);padding:3px;font-family:inherit;font-size:14px}
@@ -603,7 +610,10 @@ function calcSanSt(entries){
     const san=re.filter(e=>normType(e.type)==='산란').reduce((a,e)=>a+e.amount,0);
     const sel=re.filter(e=>normType(e.type)==='선별').reduce((a,e)=>a+e.amount,0);
     const peg=re.filter(e=>normType(e.type)==='산란폐기').reduce((a,e)=>a+e.amount,0);
-    const occ=Math.max(0,san-sel-peg);
+    // 룸이동: 출발룸(room)에서 빠지고 도착룸(toRoom)으로 들어옴 (총계는 불변)
+    const mvOut=entries.filter(e=>e.type==='이동'&&e.room===r).reduce((a,e)=>a+e.amount,0);
+    const mvIn=entries.filter(e=>e.type==='이동'&&e.toRoom===r).reduce((a,e)=>a+e.amount,0);
+    const occ=Math.max(0,san-sel-peg-mvOut+mvIn);
     s[r]={cap,occ,avail:Math.max(0,cap-occ),rate:cap>0?Math.round(occ/cap*100):0};
   }
   return s;
@@ -719,6 +729,7 @@ function EditModal({entry,onSave,onClose}){
   const [type,setType]=useState(entry.type);
   const [amount,setAmount]=useState(String(entry.amount));
   const [note,setNote]=useState(entry.note||'');
+  const [toRoom,setToRoom]=useState(entry.toRoom||'');
   const [err,setErr]=useState('');
   return(
     <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:999,padding:16}} onClick={onClose}>
@@ -726,14 +737,18 @@ function EditModal({entry,onSave,onClose}){
         <div style={{fontSize:20,fontWeight:800,marginBottom:18}}>✏️ 기록 수정</div>
         <label className="lbl">날짜</label>
         <input className="dinp" type="date" value={date} onChange={e=>setDate(e.target.value)}/>
-        <label className="lbl">룸</label>
-        <div className="rbtns">{SAN_RO.map(r=><button key={r} className={`rbtn${room===r?' s-san':''}`} onClick={()=>setRoom(r)}>{r}</button>)}</div>
+        <label className="lbl">{type==='이동'?'출발 룸':'룸'}</label>
+        <div className="rbtns">{SAN_RO.map(r=><button key={r} className={`rbtn${room===r?(type==='이동'?' s-mv':' s-san'):''}`} onClick={()=>setRoom(r)}>{r}</button>)}</div>
         <label className="lbl">종류</label>
-        <div className="tbtns">{[['산란','ti-egg','s-san'],['사육','ti-share','s-sel'],['폐기','ti-trash','s-peg']].map(([t,ic,cls])=>(
+        <div className="tbtns tbtns-4">{[['산란','ti-egg','s-san','산란세팅'],['사육','ti-share','s-sel','사육세팅'],['폐기','ti-trash','s-peg','산란폐기'],['이동','ti-arrows-right-left','s-mv','룸이동']].map(([t,ic,cls,lbl])=>(
           <button key={t} className={`tbtn${type===t?' '+cls:''}`} onClick={()=>setType(t)}>
-            <i className={`ti ${ic}`}/>{t==='산란'?'산란세팅':t==='사육'?'사육세팅':'산란폐기'}
+            <i className={`ti ${ic}`}/>{lbl}
           </button>
         ))}</div>
+        {type==='이동'&&(<>
+          <label className="lbl">도착 룸</label>
+          <div className="rbtns">{SAN_RO.filter(r=>r!==room).map(r=><button key={r} className={`rbtn${toRoom===r?' s-mv':''}`} onClick={()=>setToRoom(r)}>{r}</button>)}</div>
+        </>)}
         <label className="lbl">수량</label>
         <input className="ainp" type="number" value={amount} onChange={e=>setAmount(e.target.value)}/>
         <label className="lbl" style={{marginTop:12}}>비고</label>
@@ -741,7 +756,7 @@ function EditModal({entry,onSave,onClose}){
         {err&&<div style={{color:'var(--rd-t)',fontSize:15,marginBottom:8,marginTop:8}}>{err}</div>}
         <div className="modal-btns">
           <button className="mbtn" onClick={onClose}>취소</button>
-          <button className="mbtn p-san" onClick={()=>{if(!amount||Number(amount)<=0){setErr('수량 확인');return;}const d={...entry,date,room,type,amount:Number(amount)};if(note&&note.trim())d.note=note.trim();else delete d.note;onSave(d);}}>저장</button>
+          <button className="mbtn p-san" onClick={()=>{if(!amount||Number(amount)<=0){setErr('수량 확인');return;}if(type==='이동'&&!toRoom){setErr('도착 룸을 선택해주세요');return;}const d={...entry,date,room,type,amount:Number(amount)};if(type==='이동')d.toRoom=toRoom;else delete d.toRoom;if(note&&note.trim())d.note=note.trim();else delete d.note;onSave(d);}}>저장</button>
         </div>
       </div>
     </div>
@@ -865,7 +880,7 @@ function App(){
   const [hf,setHf]=useState('전체');const[hr,setHr]=useState('');
   const [yr,setYr]=useState('전체');
   const [histView,setHistView]=useState('all');
-  const [form,setForm]=useState({date:today(),room:'가2D',type:'산란',amount:'',note:''});
+  const [form,setForm]=useState({date:today(),room:'가2D',type:'산란',amount:'',note:'',toRoom:''});
   const [exporting,setExporting]=useState(false);
   const [trash,setTrash]=useState([]);
   const [showTrash,setShowTrash]=useState(false);
@@ -966,13 +981,15 @@ function App(){
   async function submitEntry(){
     if(!isAdmin){showToast('관리자 로그인 후 입력 가능');return;}
     if(!form.amount||Number(form.amount)<=0){showToast('수량을 입력해주세요');return;}
+    if(form.type==='이동'&&!form.toRoom){showToast('도착 룸을 선택해주세요');return;}
     const ne={date:form.date,room:form.room,type:form.type,amount:Number(form.amount)};
+    if(form.type==='이동')ne.toRoom=form.toRoom;
     if(form.note&&form.note.trim())ne.note=form.note.trim();
     try{
       if(fbConn){await fbPush('entries_v2',ne);}
       else{setEntries(prev=>[...prev,{...ne,id:'loc_'+Date.now()}].sort((a,b)=>a.date.localeCompare(b.date)));}
-      const label=ne.type==='산란'?'산란세팅':ne.type==='사육'?'사육세팅':'산란폐기';
-      showToast(`✓ ${label} ${fmt(ne.amount)} 저장`);
+      const label=ne.type==='산란'?'산란세팅':ne.type==='사육'?'사육세팅':ne.type==='이동'?'룸이동':'산란폐기';
+      showToast(ne.type==='이동'?`✓ ${ne.room} → ${ne.toRoom} ${fmt(ne.amount)} 이동`:`✓ ${label} ${fmt(ne.amount)} 저장`);
       setForm(f=>({...f,amount:'',note:''}));
     }catch(e){showToast('저장 실패: '+e.message);}
   }
@@ -980,8 +997,8 @@ function App(){
     if(!isAdmin){showToast('관리자 로그인 후 삭제 가능');return;}
     const target=entries.find(e=>e.id===id);
     if(!target)return;
-    const lb=target.type==='산란'?'산란세팅':target.type==='사육'?'사육세팅':'산란폐기';
-    if(!confirm(`${target.date}  ${target.room}\n${lb}  ${fmt(target.amount)}\n\n삭제할까요? (휴지통으로 이동)`))return;
+    const lb=target.type==='산란'?'산란세팅':target.type==='사육'?'사육세팅':target.type==='이동'?'룸이동':'산란폐기';
+    if(!confirm(`${target.date}  ${target.type==='이동'?target.room+' → '+target.toRoom:target.room}\n${lb}  ${fmt(target.amount)}\n\n삭제할까요? (휴지통으로 이동)`))return;
     try{
       if(fbConn){await fbUpdate(`entries_v2/${id}`,{deleted:true,deletedAt:Date.now()});}
       else{setEntries(p=>p.filter(e=>e.id!==id));setTrash(p=>[{...target,deletedAt:Date.now()},...p]);}
@@ -1015,6 +1032,8 @@ function App(){
   }
   async function saveEdit(data){
     const{id,...rest}=data;
+    if(rest.toRoom===undefined)rest.toRoom=null;   // 이동이 아니면 도착룸 제거
+    if(rest.note===undefined)rest.note=null;
     if(fbConn){await fbUpdate(`entries_v2/${id}`,rest);}else{setEntries(p=>p.map(e=>e.id===id?data:e));}
     setEditEntry(null);showToast('수정됨');
   }
@@ -1051,13 +1070,14 @@ function App(){
       if(hf==='산란'&&nt!=='산란')return false;
       if(hf==='선별'&&nt!=='선별')return false;
       if(hf==='폐기'&&nt!=='산란폐기')return false;
-      if(hr&&e.room!==hr)return false;
+      if(hf==='이동'&&e.type!=='이동')return false;
+      if(hr&&e.room!==hr&&e.toRoom!==hr)return false;
       return true;
     }).sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
   },[entries,hf,hr,yr]);
 
-  const typeLabel=t=>t==='산란'?'산란세팅':t==='사육'?'사육세팅':t==='폐기'?'산란폐기':t;
-  const typeBadge=t=>t==='산란'?'b-san':t==='사육'?'b-sel':'b-peg';
+  const typeLabel=t=>t==='산란'?'산란세팅':t==='사육'?'사육세팅':t==='폐기'?'산란폐기':t==='이동'?'룸이동':t;
+  const typeBadge=t=>t==='산란'?'b-san':t==='사육'?'b-sel':t==='이동'?'b-mv':'b-peg';
   const TABS=[['dash','ti-layout-dashboard','현황'],['input','ti-plus','입력'],['sched','ti-calendar','일정'],['stat','ti-chart-bar','통계'],['hist','ti-history','이력']];
 
   // 입력 미리보기: amount 있을 때만
@@ -1117,23 +1137,33 @@ function App(){
           <div className="in-card">
             <label className="lbl"><i className="ti ti-calendar-event"/> 날짜</label>
             <input type="date" className="dinp" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/>
-            <label className="lbl"><i className="ti ti-home"/> 산란실 룸 <span className="lbl-hint">숫자=여유</span></label>
+            <label className="lbl"><i className="ti ti-home"/> {form.type==='이동'?'출발 룸':'산란실 룸'} <span className="lbl-hint">{form.type==='이동'?'숫자=현재세팅':'숫자=여유'}</span></label>
             <div className="rbtns">
               {SAN_RO.map(r=>{
-                const av=sanSt[r].avail;const sel=form.room===r;
-                return(<button key={r} className={`rbtn${sel?(r.startsWith('나')?' s-na':' s-san'):''}`} onClick={()=>setForm(f=>({...f,room:r}))}>
+                const av=form.type==='이동'?sanSt[r].occ:sanSt[r].avail;const sel=form.room===r;
+                return(<button key={r} className={`rbtn${sel?(form.type==='이동'?' s-mv':(r.startsWith('나')?' s-na':' s-san')):''}`} onClick={()=>setForm(f=>({...f,room:r,toRoom:f.toRoom===r?'':f.toRoom}))}>
                   {r}<div className="sub">{fmt(av)}</div>
                 </button>);
               })}
             </div>
             <label className="lbl"><i className="ti ti-category"/> 종류</label>
-            <div className="tbtns">
-              {[['산란','ti-egg','s-san','산란세팅'],['사육','ti-share','s-sel','사육세팅'],['폐기','ti-trash','s-peg','산란폐기']].map(([t,ic,cls,lbl])=>(
-                <button key={t} className={`tbtn${form.type===t?' '+cls:''}`} onClick={()=>setForm(f=>({...f,type:t}))}>
+            <div className="tbtns tbtns-4">
+              {[['산란','ti-egg','s-san','산란세팅'],['사육','ti-share','s-sel','사육세팅'],['폐기','ti-trash','s-peg','산란폐기'],['이동','ti-arrows-right-left','s-mv','룸이동']].map(([t,ic,cls,lbl])=>(
+                <button key={t} className={`tbtn${form.type===t?' '+cls:''}`} onClick={()=>setForm(f=>({...f,type:t,toRoom:t==='이동'?f.toRoom:''}))}>
                   <i className={`ti ${ic}`}/>{lbl}
                 </button>
               ))}
             </div>
+            {form.type==='이동'&&(<>
+              <label className="lbl"><i className="ti ti-arrow-right"/> 도착 룸 <span className="lbl-hint">숫자=여유</span></label>
+              <div className="rbtns">
+                {SAN_RO.filter(r=>r!==form.room).map(r=>(
+                  <button key={r} className={`rbtn${form.toRoom===r?' s-mv':''}`} onClick={()=>setForm(f=>({...f,toRoom:r}))}>
+                    {r}<div className="sub">{fmt(sanSt[r].avail)}</div>
+                  </button>
+                ))}
+              </div>
+            </>)}
             <label className="lbl"><i className="ti ti-hash"/> 수량 <span className="lbl-hint">마릿수</span></label>
             <input type="number" className="ainp" placeholder="0" value={form.amount} min={1}
               onChange={e=>setForm(f=>({...f,amount:e.target.value}))}
@@ -1145,6 +1175,34 @@ function App(){
           {hasPreview&&(()=>{
             const amt=Number(form.amount);
             const cur=form.room&&sanSt[form.room]?sanSt[form.room]:null;
+            // 룸이동 전용 미리보기: 출발룸 ↓ / 도착룸 ↑ (총계 불변)
+            if(form.type==='이동'){
+              const dst=form.toRoom&&sanSt[form.toRoom]?sanSt[form.toRoom]:null;
+              const fromAfter=cur?cur.occ-amt:0;
+              const toAfter=dst?dst.occ+amt:0;
+              return(
+                <div className="in-preview" style={{background:'linear-gradient(135deg,var(--sak-h),#fff)',borderColor:'var(--sak)',boxShadow:'0 4px 14px rgba(124,58,237,.14)'}}>
+                  <div className="in-preview-h" style={{color:'var(--sak-t)'}}><i className="ti ti-eye"/> 입력 확인 · 룸이동</div>
+                  <div className="in-preview-g">
+                    <div><span>날짜</span><b>{form.date}</b></div>
+                    <div><span>이동 수량</span><b style={{color:'var(--sak-t)',fontSize:18}}>{fmt(amt)}</b></div>
+                  </div>
+                  <div style={{marginTop:12,paddingTop:12,borderTop:'1px dashed var(--sak)',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+                    <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                      <span style={{fontSize:12,color:'var(--tx2)',fontWeight:600}}>출발 {form.room} (입력 후)</span>
+                      <b style={{fontSize:16}}><span style={{color:'var(--tx3)'}}>{cur?fmt(cur.occ):'—'}</span> <span style={{color:'var(--tx3)'}}>→</span> <span style={{color:fromAfter<0?'var(--rd-t)':'var(--sak-t)'}}>{cur?fmt(fromAfter):'—'}</span></b>
+                    </div>
+                    <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                      <span style={{fontSize:12,color:'var(--tx2)',fontWeight:600}}>도착 {form.toRoom||'(선택)'} (입력 후)</span>
+                      <b style={{fontSize:16}}><span style={{color:'var(--tx3)'}}>{dst?fmt(dst.occ):'—'}</span> <span style={{color:'var(--tx3)'}}>→</span> <span style={{color:'var(--sak-t)'}}>{dst?fmt(toAfter):'—'}</span></b>
+                    </div>
+                  </div>
+                  {cur&&fromAfter<0&&<div style={{marginTop:8,fontSize:12,color:'var(--rd-t)',fontWeight:700}}>⚠ 출발 룸의 현재세팅보다 많습니다</div>}
+                  {dst&&toAfter>dst.cap&&<div style={{marginTop:8,fontSize:12,color:'var(--rd-t)',fontWeight:700}}>⚠ 도착 룸의 총 용량을 초과합니다</div>}
+                  <div style={{marginTop:9,fontSize:12,color:'var(--tx2)',fontWeight:600,lineHeight:1.5}}>자리만 옮기는 기록이라 산란세팅·사육세팅·폐기 통계에는 반영되지 않습니다.</div>
+                </div>
+              );
+            }
             // 입력 후 예상: 산란=현재세팅↑·여유↓ / 사육·폐기=현재세팅↓·여유↑
             let afterOcc=null,afterAvail=null;
             if(cur){
@@ -1362,13 +1420,13 @@ function App(){
               {trash.length===0
                 ?<div style={{background:'var(--sf2)',border:'1px dashed var(--bd)',borderRadius:'var(--r)',padding:'22px 14px',textAlign:'center',color:'var(--tx3)',fontSize:14,fontWeight:600}}>휴지통이 비어 있습니다</div>
                 :trash.map(t=>{
-                  const lb=t.type==='산란'?'산란세팅':t.type==='사육'?'사육세팅':'산란폐기';
+                  const lb=t.type==='산란'?'산란세팅':t.type==='사육'?'사육세팅':t.type==='이동'?'룸이동':'산란폐기';
                   const dd=t.deletedAt?new Date(t.deletedAt):null;
                   return(
                     <div key={t.id} style={{background:'var(--sf)',border:'1px solid var(--bd)',borderLeft:'5px solid #9CA3AF',borderRadius:'var(--r)',padding:'11px 13px',marginBottom:8,boxShadow:'var(--sh)'}}>
                       <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
                         <span style={{fontSize:14,fontWeight:800}}>{t.date}</span>
-                        <span style={{fontSize:14,fontWeight:700}}>{t.room}</span>
+                        <span style={{fontSize:14,fontWeight:700}}>{t.type==='이동'?t.room+' → '+t.toRoom:t.room}</span>
                         <span className={`hi-b ${typeBadge(t.type)}`}>{lb}</span>
                         <span style={{fontSize:16,fontWeight:800,marginLeft:'auto'}}>{fmt(t.amount)}</span>
                       </div>
@@ -1393,7 +1451,7 @@ function App(){
           {histView==='batch'&&<SanBatchView entries={entries} year={yr}/>}
           {histView==='all'&&(<>
             <div className="fbar">
-              {[['전체','전체'],['산란','산란세팅'],['선별','사육세팅'],['폐기','산란폐기']].map(([v,lbl])=><button key={v} className={`fbtn${hf===v?' on':''}`} onClick={()=>setHf(v)}>{lbl}</button>)}
+              {[['전체','전체'],['산란','산란세팅'],['선별','사육세팅'],['폐기','산란폐기'],['이동','룸이동']].map(([v,lbl])=><button key={v} className={`fbtn${hf===v?' on':''}`} onClick={()=>setHf(v)}>{lbl}</button>)}
               <span style={{padding:'0 4px',color:'var(--tx3)'}}>|</span>
               {['전체',...SAN_RO].map(r=><button key={r} className={`fbtn${hr===(r==='전체'?'':r)?' on':''}`} onClick={()=>setHr(r==='전체'?'':r)}>{r}</button>)}
             </div>
@@ -1402,7 +1460,7 @@ function App(){
               <div key={e.id} className="hi" style={{flexDirection:'column',alignItems:'stretch',gap:0}}>
                 <div style={{display:'flex',alignItems:'center',gap:11}}>
                   <span className="hi-dt"><span className="hi-yr">{e.date.slice(0,4)}</span><span className="hi-md">{e.date.slice(5).replace('-','/')}</span></span>
-                  <span className="hi-rm">{e.room}</span>
+                  <span className="hi-rm">{e.type==='이동'?<>{e.room} <span style={{color:'var(--sak)',fontWeight:800}}>→</span> {e.toRoom}</>:e.room}</span>
                   <span className={`hi-b ${typeBadge(e.type)}`}>{typeLabel(e.type)}</span>
                   <span className="hi-a">{fmt(e.amount)}</span>
                   {isAdmin&&<><button className="edit-btn" onClick={()=>setEditEntry(e)}><i className="ti ti-pencil"/></button><button className="del" onClick={()=>delEntry(e.id)}><i className="ti ti-x"/></button></>}
