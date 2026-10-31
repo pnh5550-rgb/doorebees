@@ -788,6 +788,8 @@ function loadDB(){
 }
 
 function saveDB(){
+  // ★ 저장 직전 재고를 기록에서 재계산 → 삭제/수정 후에도 잔량이 항상 기록과 일치 (유령 잔량 방지)
+  try{ recomputeStock(); }catch(e){ console.warn('recomputeStock:',e); }
   // 데이터 저장: localStorage + Firebase (항상 최신 입력을 보존)
   try{ localStorage.setItem('qbDB28', JSON.stringify(DB)); }catch(e){}
   try{
@@ -859,6 +861,26 @@ function restoreStock(qty, detail){
   }
   const sorted=[...DB.batches].sort((a,b)=>b.col_date.localeCompare(a.col_date));
   if(sorted.length){ sorted[0].wintered=(sorted[0].wintered||0)+qty; }
+}
+
+// ★ 재고 재계산: 잔량(wintered)을 기록(입고/해제 이벤트)에서 항상 다시 계산한다.
+// 누적 카운터 방식의 drift(삭제/수정 후 유령 잔량)를 원천 차단. saveDB()에서 매번 호출.
+function recomputeStock(){
+  const colSum={}, relSum={};
+  for(const e of DB.events){
+    if(!e.batch_id) continue;
+    if(e.type==='col') colSum[e.batch_id]=(colSum[e.batch_id]||0)+e.qty;
+    else if(e.type==='rel') relSum[e.batch_id]=(relSum[e.batch_id]||0)+e.qty;
+  }
+  // 월동입고 배치(winterIn)만 재계산. 과거 시드/채집전용 배치는 손대지 않음.
+  for(const b of DB.batches){
+    if(b.winterIn===true){
+      b.wintered=Math.max(0,(colSum[b.id]||0)-(relSum[b.id]||0));
+    }
+  }
+  // 배치 미지정 해제는 날짜순으로 오래된 배치부터 FIFO 차감 (deductDetail 유무와 무관하게 결정적)
+  const freeRel=DB.events.filter(e=>e.type==='rel' && !e.batch_id).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  for(const e of freeRel){ deductStock(e.qty); }
 }
 
 function totalStock(){
